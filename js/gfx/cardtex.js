@@ -8,8 +8,10 @@
  *
  * Easter eggs (pedidos do usuário; índices, naipes, cores e contagem de pips
  * continuam os de sempre, então nada muda o valor da carta):
- *   - Dama de Copas (Qh): a logo da Nous Research (Hermes Agent), bitmap de Truco.CardArt.nous
- *     (js/gfx/cardart.js) dentro da moldura espelhada; sem a imagem, cai na garota anime vetorial.
+ *   - Dama de Copas (Qh): dama de chanel preto com franja reta e brilhos, tiara branca com
+ *     coroinha dourada, fone de ouvido pequeno, olhos grandes de anime e gola alta com plaquinha
+ *     de copas, inspirada na garota de mangá da logo da Nous Research (Hermes Agent); segura o
+ *     caduceu. Tudo vetorial, no traço das outras figuras (drawBob*).
  *   - Todos os 2 (2c 2h 2s 2d): duas bananinhas sorridentes entre os dois pips (alusão ao
  *     Nano Banana 2), inclinadas em sentidos opostos, com inclinação diferente por naipe. Os dois pips ficam no lugar.
  *   - Ás de Espadas (As): o Clawd (mascote do Claude Code) em pixel-art 8-bit, abraçado no
@@ -745,13 +747,14 @@
     clubs: { robe: '#2A2A31', panel: C.red, band: C.gold, trim: C.gold, motif: C.red, hair: '#6B3F1F', eye: C.navy },
   };
 
-  // Objeto e espelhamento por figura (varia a composição entre naipes).
+  // Objeto e espelhamento por figura (varia a composição entre naipes); `bob` troca a dama padrão
+  // pela dama de chanel, tiara e fone (easter egg da Qh, drawBob*).
   const COURT_SPECS = {
     Kh: { object: 'swordBehind', mirror: false },
     Ks: { object: 'sword', mirror: true },
     Kd: { object: 'axe', mirror: false },
     Kc: { object: 'scepter', mirror: true },
-    Qh: { object: 'caduceus', mirror: true, hermes: true, art: 'nous' }, // easter egg: logo da Nous (Hermes Agent); o desenho anime fica de reserva
+    Qh: { object: 'caduceus', mirror: true, bob: true }, // easter egg: dama de chanel e fone, inspirada na logo da Nous (Hermes)
     Qs: { object: 'scepterOrb', mirror: false },
     Qd: { object: 'tulip', mirror: true },
     Qc: { object: 'bouquet', mirror: false },
@@ -1741,236 +1744,295 @@
     }
   }
 
-  // --- Easter egg: a dama anime com coroa alada (Qh) ---------------------------
+  // --- Easter egg: a dama de chanel preto, tiara e fone (Qh) -------------------
+  // Inspirada na garota de mangá da logo da Nous Research, mas desenhada no traço do baralho:
+  // cabelo preto em chanel com franja reta e brilhos brancos, tiara branca com coroinha dourada,
+  // um fone pequeno numa orelha, olhos grandes de anime olhando de lado e gola alta com plaquinha.
 
-  function drawAnimeHairBack(ctx, pal) {
-    // Cabelo liso e comprido, com as pontas em mechas sobre os ombros.
+  const BOB = { hair: '#1D1D25', strand: '#474B63', shine: '#FFFDF6' };
+
+  /** Brilho do cabelo: cunha branca afinando nas pontas, ao longo de `angle`. */
+  function hairShine(ctx, x, y, len, width, angle) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
     ctx.beginPath();
-    ctx.moveTo(-30, -252);
-    ctx.bezierCurveTo(-66, -244, -64, -200, -62, -162);
-    ctx.lineTo(-82, -102);
-    ctx.lineTo(-68, -114);
-    ctx.lineTo(-66, -96);
-    ctx.lineTo(-52, -116);
-    ctx.lineTo(-44, -104);
-    ctx.lineTo(-34, -124);
-    ctx.lineTo(34, -124);
-    ctx.lineTo(44, -104);
-    ctx.lineTo(52, -116);
-    ctx.lineTo(66, -96);
-    ctx.lineTo(68, -114);
-    ctx.lineTo(82, -102);
-    ctx.lineTo(62, -162);
-    ctx.bezierCurveTo(64, -200, 66, -244, 30, -252);
+    ctx.moveTo(-len / 2, 0);
+    ctx.quadraticCurveTo(0, -width, len / 2, 0);
+    ctx.quadraticCurveTo(0, width * 0.35, -len / 2, 0);
     ctx.closePath();
-    paint(ctx, pal.hair, 2.2);
+    ctx.fillStyle = BOB.shine;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawBobHairBack(ctx) {
+    // Volume do chanel atrás da cabeça, com as pontas viradas para fora na altura do queixo.
+    ctx.beginPath();
+    ctx.moveTo(0, -268);
+    ctx.bezierCurveTo(42, -268, 62, -242, 60, -204);
+    ctx.bezierCurveTo(59, -180, 60, -164, 68, -154);
+    ctx.quadraticCurveTo(82, -142, 96, -156);
+    ctx.quadraticCurveTo(94, -130, 66, -130);
+    ctx.quadraticCurveTo(44, -132, 30, -144);
+    ctx.lineTo(-30, -144);
+    ctx.quadraticCurveTo(-44, -132, -66, -130);
+    ctx.quadraticCurveTo(-94, -130, -96, -156);
+    ctx.quadraticCurveTo(-82, -142, -68, -154);
+    ctx.bezierCurveTo(-60, -162, -59, -180, -60, -204);
+    ctx.bezierCurveTo(-62, -242, -42, -268, 0, -268);
+    ctx.closePath();
+    paint(ctx, BOB.hair, 2.4);
     ctx.save();
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(27, 27, 31, 0.5)';
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = BOB.strand;
+    ctx.lineWidth = 1.5;
     for (const s of [1, -1]) {
-      for (const [x0, x1] of [[48, 60], [54, 72]]) {
+      for (const [x0, x1, y1] of [[50, 64, -140], [56, 76, -138]]) {
         ctx.beginPath();
-        ctx.moveTo(s * x0, -206);
-        ctx.quadraticCurveTo(s * (x0 + 4), -160, s * x1, -112);
+        ctx.moveTo(s * x0, -214);
+        ctx.bezierCurveTo(s * (x0 + 3), -186, s * (x0 + 2), -160, s * x1, y1);
         ctx.stroke();
       }
     }
     ctx.restore();
+    // Brilhos nas laterais.
+    for (const s of [1, -1]) {
+      hairShine(ctx, s * 54, -190, 30, 5, s * 1.45);
+      hairShine(ctx, s * 78, -137, 20, 4, s * -0.25);
+    }
   }
 
-  function drawAnimeHead(ctx) {
-    // Rosto de queixo fino, típico de anime.
+  function drawHighCollar(ctx, pal) {
+    // Gola alta creme que sobe pelo pescoço, com debrum azul-marinho e a plaquinha de copas.
     ctx.beginPath();
-    ctx.moveTo(0, -252);
-    ctx.bezierCurveTo(24, -252, 37, -234, 37, -208);
-    ctx.bezierCurveTo(37, -190, 30, -177, 18, -167);
+    ctx.moveTo(-20, -168);
+    ctx.quadraticCurveTo(0, -162, 20, -168);
+    ctx.lineTo(30, -140);
+    ctx.quadraticCurveTo(0, -130, -30, -140);
+    ctx.closePath();
+    paint(ctx, C.lace, 2.2);
+    ctx.beginPath();
+    ctx.moveTo(-28, -146);
+    ctx.quadraticCurveTo(0, -137, 28, -146);
+    ctx.lineTo(30, -140);
+    ctx.quadraticCurveTo(0, -130, -30, -140);
+    ctx.closePath();
+    paint(ctx, pal.band, 1.6);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(27, 27, 31, 0.4)';
+    ctx.lineWidth = 1;
+    for (const x of [-12, 12]) {
+      ctx.beginPath();
+      ctx.moveTo(x * 1.05, -164);
+      ctx.lineTo(x * 1.35, -144);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // Plaquinha dourada com um coraçãozinho.
+    ctx.save();
+    ctx.translate(0, -151);
+    ctx.rotate(Math.PI / 4);
+    ctx.beginPath();
+    ctx.rect(-8, -8, 16, 16);
+    ctx.restore();
+    paint(ctx, C.gold, 1.8);
+    pipPath(ctx, 'hearts', 0, -151, 5);
+    ctx.fillStyle = C.red;
+    ctx.fill();
+  }
+
+  function drawBobHead(ctx) {
+    // Rosto delicado de queixo fino.
+    ctx.beginPath();
+    ctx.moveTo(0, -250);
+    ctx.bezierCurveTo(24, -250, 36, -232, 36, -208);
+    ctx.bezierCurveTo(36, -190, 29, -176, 17, -166);
     ctx.quadraticCurveTo(7, -158, 0, -158);
-    ctx.quadraticCurveTo(-7, -158, -18, -167);
-    ctx.bezierCurveTo(-30, -177, -37, -190, -37, -208);
-    ctx.bezierCurveTo(-37, -234, -24, -252, 0, -252);
+    ctx.quadraticCurveTo(-7, -158, -17, -166);
+    ctx.bezierCurveTo(-29, -176, -36, -190, -36, -208);
+    ctx.bezierCurveTo(-36, -232, -24, -250, 0, -250);
     ctx.closePath();
     paint(ctx, C.skin, 2.4);
   }
 
-  function drawAnimeFace(ctx, pal) {
+  function drawBobFace(ctx, pal) {
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    // Bochechas coradas com risquinhos.
     for (const s of [1, -1]) {
-      ellipse(ctx, s * 22, -182, 8, 4.5);
-      ctx.fillStyle = 'rgba(226, 96, 96, 0.35)';
+      const g = ctx.createRadialGradient(s * 21, -181, 1, s * 21, -181, 10);
+      g.addColorStop(0, C.blush);
+      g.addColorStop(1, 'rgba(214, 96, 86, 0)');
+      ctx.fillStyle = g;
+      circle(ctx, s * 21, -181, 10);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(192, 39, 45, 0.55)';
-      ctx.lineWidth = 1.1;
-      for (let k = -1; k <= 1; k++) {
-        ctx.beginPath();
-        ctx.moveTo(s * 22 + k * 4 - 1.5, -180);
-        ctx.lineTo(s * 22 + k * 4 + 1.5, -184.5);
-        ctx.stroke();
-      }
     }
-    // Olhos grandes e brilhantes.
+    // Olhos grandes olhando de lado (as duas íris puxadas para +x).
+    const look = 3.2;
     for (const s of [1, -1]) {
       const ex = s * 15;
-      const ey = -201;
-      ellipse(ctx, ex, ey, 10, 12.5);
+      const ey = -199;
+      ctx.beginPath();
+      ctx.moveTo(ex - 11, ey - 1);
+      ctx.bezierCurveTo(ex - 8, ey - 13, ex + 8, ey - 13, ex + 11, ey - 3);
+      ctx.bezierCurveTo(ex + 9, ey + 9, ex - 8, ey + 10, ex - 11, ey - 1);
+      ctx.closePath();
       paint(ctx, '#FFFFFF', 1.2);
       ctx.save();
-      ellipse(ctx, ex, ey, 10, 12.5);
       ctx.clip();
-      const g = ctx.createLinearGradient(0, ey - 11, 0, ey + 11);
-      g.addColorStop(0, '#0E1C3A');
-      g.addColorStop(0.55, pal.eye);
-      g.addColorStop(1, '#5B8FD6');
-      ellipse(ctx, ex, ey + 1.5, 8, 11);
+      const ix = ex + look;
+      const g = ctx.createLinearGradient(0, ey - 10, 0, ey + 9);
+      g.addColorStop(0, '#0B1226');
+      g.addColorStop(0.6, pal.eye);
+      g.addColorStop(1, '#4E7FC4');
+      ellipse(ctx, ix, ey, 7.5, 9.5);
       ctx.fillStyle = g;
       ctx.fill();
-      ellipse(ctx, ex, ey + 0.5, 3.8, 5.5);
-      ctx.fillStyle = '#0A0F1E';
+      ellipse(ctx, ix + 0.4, ey - 0.5, 3.6, 5);
+      ctx.fillStyle = '#070A14';
       ctx.fill();
       ctx.restore();
-      // Brilhos (mesma direção de luz nos dois olhos).
       ctx.fillStyle = '#FFFFFF';
-      ellipse(ctx, ex - 3.4, ey - 4, 3.4, 4);
+      ellipse(ctx, ix - 2.8, ey - 3.6, 2.8, 3.4);
       ctx.fill();
-      circle(ctx, ex + 3.4, ey + 5, 1.7);
+      circle(ctx, ix + 3, ey + 4, 1.4);
       ctx.fill();
-      // Cílio superior grosso com a pontinha para fora.
+      // Linha grossa dos cílios de cima, com dois cílios para fora.
       ctx.beginPath();
-      ctx.moveTo(ex - s * 11, ey - 3);
-      ctx.quadraticCurveTo(ex - s * 2, ey - 19, ex + s * 11, ey - 7);
-      ctx.lineTo(ex + s * 16, ey - 10);
-      ctx.lineTo(ex + s * 11.5, ey - 3);
-      ctx.quadraticCurveTo(ex - s * 1, ey - 14, ex - s * 11, ey - 3);
+      ctx.moveTo(ex - s * 12, ey + 1);
+      ctx.bezierCurveTo(ex - s * 9, ey - 14, ex + s * 8, ey - 15, ex + s * 12.5, ey - 4);
+      ctx.lineTo(ex + s * 18, ey - 9);
+      ctx.lineTo(ex + s * 14, ey - 2);
+      ctx.lineTo(ex + s * 17, ey + 1);
+      ctx.lineTo(ex + s * 11.5, ey - 1);
+      ctx.bezierCurveTo(ex + s * 7, ey - 11, ex - s * 8, ey - 10, ex - s * 12, ey + 1);
       ctx.closePath();
       ctx.fillStyle = C.ink;
       ctx.fill();
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = 1.4;
       ctx.strokeStyle = C.ink;
       ctx.stroke();
-      // Cílio inferior curtinho.
+      // Dobra da pálpebra e cílio de baixo.
       ctx.beginPath();
-      ctx.moveTo(ex + s * 5, ey + 12);
-      ctx.quadraticCurveTo(ex + s * 9, ey + 10, ex + s * 10.5, ey + 6);
+      ctx.moveTo(ex - s * 7, ey - 15);
+      ctx.quadraticCurveTo(ex + s * 3, ey - 18, ex + s * 10, ey - 12);
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ex - s * 2, ey + 8.5);
+      ctx.quadraticCurveTo(ex + s * 6, ey + 7.5, ex + s * 10, ey + 3);
       ctx.lineWidth = 1.3;
       ctx.stroke();
     }
-    // Narizinho e boca sorridente.
+    // Narizinho de um traço e boca pequena.
     ctx.beginPath();
-    ctx.moveTo(0.5, -186);
-    ctx.lineTo(-1.2, -182.5);
+    ctx.moveTo(2, -188);
+    ctx.quadraticCurveTo(-1, -184, 1.5, -182);
     ctx.lineWidth = 1.5;
     ctx.strokeStyle = C.ink;
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(-6, -173);
-    ctx.quadraticCurveTo(0, -171.5, 6, -173);
-    ctx.quadraticCurveTo(0, -164, -6, -173);
+    ctx.moveTo(-5, -171);
+    ctx.quadraticCurveTo(0, -172.5, 5, -171);
+    ctx.quadraticCurveTo(0, -166, -5, -171);
     ctx.closePath();
-    paint(ctx, '#B8323A', 1.3);
+    paint(ctx, '#C23A44', 1.2);
     ctx.restore();
   }
 
-  function drawAnimeBangs(ctx, pal) {
-    // Franja em mechas pontudas + duas mechas longas emoldurando o rosto.
+  function drawBobBangs(ctx) {
+    // Franja reta e cheia, cortada logo acima dos olhos, com mechinhas separadas na ponta.
     ctx.beginPath();
-    ctx.moveTo(-44, -164);
-    ctx.bezierCurveTo(-52, -212, -46, -260, 0, -262);
-    ctx.bezierCurveTo(46, -260, 52, -212, 44, -164);
-    ctx.quadraticCurveTo(36, -186, 33, -214);
-    const pts = [[26, -204], [18, -230], [9, -212], [1, -234], [-8, -214], [-15, -231], [-24, -205], [-31, -224], [-33, -214]];
-    let px = 33;
-    let py = -214;
-    for (const [x, y] of pts) {
-      const tip = y > -222;
-      ctx.quadraticCurveTo(tip ? x + (px - x) * 0.15 : px, tip ? py + (y - py) * 0.2 : y, x, y);
-      px = x;
-      py = y;
-    }
-    ctx.quadraticCurveTo(-36, -186, -44, -164);
+    ctx.moveTo(-39, -206);
+    ctx.bezierCurveTo(-44, -246, -24, -268, 0, -268);
+    ctx.bezierCurveTo(24, -268, 44, -246, 39, -206);
+    const cut = [[33, -216], [30, -212], [24, -218], [19, -214], [13, -219], [7, -215], [1, -220], [-5, -215], [-11, -219], [-17, -214], [-23, -218], [-29, -212], [-33, -216]];
+    for (const [x, y] of cut) ctx.lineTo(x, y);
     ctx.closePath();
-    paint(ctx, pal.hair, 2);
-    // Faixa de brilho do cabelo.
+    paint(ctx, BOB.hair, 2.2);
+    // Mechas laterais que emolduram o rosto e viram para fora no queixo.
+    for (const s of [1, -1]) {
+      ctx.beginPath();
+      ctx.moveTo(s * 38, -228);
+      ctx.bezierCurveTo(s * 44, -200, s * 42, -176, s * 48, -158);
+      ctx.quadraticCurveTo(s * 56, -148, s * 66, -150);
+      ctx.quadraticCurveTo(s * 56, -138, s * 42, -146);
+      ctx.bezierCurveTo(s * 34, -156, s * 30, -178, s * 30, -212);
+      ctx.closePath();
+      paint(ctx, BOB.hair, 2);
+    }
     ctx.save();
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(255, 246, 214, 0.7)';
-    ctx.lineWidth = 3;
-    for (const [a0, a1] of [[1.2, 1.38], [1.46, 1.6], [1.68, 1.82]]) {
+    ctx.strokeStyle = BOB.strand;
+    ctx.lineWidth = 1.3;
+    for (const x of [-20, 2, 22]) {
       ctx.beginPath();
-      ctx.arc(0, -214, 34, a0 * Math.PI, a1 * Math.PI);
+      ctx.moveTo(x * 0.6, -262);
+      ctx.quadraticCurveTo(x * 1.1, -244, x * 1.05, -224);
       ctx.stroke();
     }
     ctx.restore();
+    // Anel de brilho na franja (o clássico reflexo de mangá): cunhas ao longo de uma elipse.
+    for (let k = 0; k < 7; k++) {
+      const t = Math.PI * (1.12 + k * 0.127);
+      const x = Math.cos(t) * 33;
+      const y = -214 + Math.sin(t) * 26;
+      const tangent = Math.atan2(Math.cos(t) * 26, -Math.sin(t) * 33);
+      hairShine(ctx, x, y, 13, 3.6, tangent + 1.25);
+    }
+    for (const s of [1, -1]) hairShine(ctx, s * 38, -190, 18, 3, s * 1.5);
   }
 
-  /** Asinha de Hermes; `s` = 1 à direita, -1 à esquerda; base em (bx, by). */
-  function drawHermesWing(ctx, bx, by, s) {
+  function drawBobTiara(ctx, pal) {
+    // Tiara branca fina por cima do cabelo.
     ctx.save();
-    ctx.translate(bx, by);
-    ctx.scale(s, 1);
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(0, 4);
-    ctx.bezierCurveTo(8, -16, 26, -38, 52, -46);
-    ctx.lineTo(46, -34);
-    ctx.lineTo(56, -32);
-    ctx.lineTo(46, -21);
-    ctx.lineTo(54, -17);
-    ctx.lineTo(42, -8);
-    ctx.lineTo(46, -3);
-    ctx.quadraticCurveTo(20, 8, 0, 4);
-    ctx.closePath();
-    paint(ctx, C.lace, 2);
-    ctx.beginPath();
-    ctx.moveTo(4, 0);
-    ctx.quadraticCurveTo(24, -14, 44, -32);
-    ctx.moveTo(4, 2);
-    ctx.quadraticCurveTo(26, -8, 44, -19);
-    ctx.moveTo(4, 3);
-    ctx.quadraticCurveTo(24, -1, 40, -6);
-    ctx.lineWidth = 1.3;
+    ctx.moveTo(-44, -218);
+    ctx.bezierCurveTo(-48, -276, 48, -276, 44, -218);
+    ctx.lineWidth = 8;
     ctx.strokeStyle = C.ink;
     ctx.stroke();
-    // Penas de dentro douradas.
-    ctx.beginPath();
-    ctx.moveTo(2, 2);
-    ctx.bezierCurveTo(8, -10, 16, -20, 26, -26);
-    ctx.quadraticCurveTo(14, -6, 2, 2);
-    ctx.closePath();
-    paint(ctx, C.gold, 1.2);
+    ctx.lineWidth = 4.6;
+    ctx.strokeStyle = C.lace;
+    ctx.stroke();
     ctx.restore();
-  }
-
-  function drawWingedCrown(ctx, pal) {
-    for (const s of [1, -1]) drawHermesWing(ctx, s * 32, -258, s);
+    // Coroinha dourada presa na tiara (continua sendo dama).
     ctx.beginPath();
-    ctx.moveTo(-34, -248);
-    ctx.lineTo(-30, -272);
-    ctx.quadraticCurveTo(-26, -270, -20, -284);
-    ctx.quadraticCurveTo(-10, -274, 0, -296);
-    ctx.quadraticCurveTo(10, -274, 20, -284);
-    ctx.quadraticCurveTo(26, -270, 30, -272);
-    ctx.lineTo(34, -248);
-    ctx.closePath();
-    paint(ctx, C.gold, 2.2);
-    for (const [x, y, r] of [[-20, -284, 3.6], [0, -296, 4.4], [20, -284, 3.6]]) {
-      circle(ctx, x, y, r);
-      paint(ctx, C.lace, 1.3);
-    }
-    ctx.beginPath();
-    ctx.moveTo(-36, -256);
-    ctx.quadraticCurveTo(0, -262, 36, -256);
-    ctx.lineTo(35, -244);
-    ctx.quadraticCurveTo(0, -250, -35, -244);
+    ctx.moveTo(-15, -258);
+    ctx.lineTo(-18, -276);
+    ctx.lineTo(-8, -268);
+    ctx.lineTo(0, -284);
+    ctx.lineTo(8, -268);
+    ctx.lineTo(18, -276);
+    ctx.lineTo(15, -258);
+    ctx.quadraticCurveTo(0, -262, -15, -258);
     ctx.closePath();
     paint(ctx, C.gold, 2);
-    ellipse(ctx, 0, -266, 5, 6.5);
-    paint(ctx, pal.band, 1.3);
-    for (const x of [-20, 20]) {
-      circle(ctx, x, -251, 3);
-      paint(ctx, C.red, 1);
+    for (const [x, y, r] of [[-18, -276, 2.8], [0, -285, 3.4], [18, -276, 2.8]]) {
+      circle(ctx, x, y, r);
+      paint(ctx, C.lace, 1.2);
     }
+    pipPath(ctx, 'hearts', 0, -266, 4.2);
+    ctx.fillStyle = C.red;
+    ctx.fill();
+    // Fone de ouvido pequeno na orelha do lado de fora (a tiara faz de arco).
+    ellipse(ctx, -45, -208, 9, 13);
+    paint(ctx, pal.band, 2);
+    ellipse(ctx, -45, -208, 5, 8.5);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = C.gold;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(-45, -208, 6.5, 10.5, 0, Math.PI * 1.1, Math.PI * 1.45);
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = C.lace;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.rect(-48, -225, 6, 6);
+    paint(ctx, C.lace, 1.4);
   }
 
   /** Caduceu pequeno: bastão dourado, duas serpentes, asinhas e esfera no topo. */
@@ -2027,96 +2089,47 @@
   function drawFigure(ctx, rank, pal, spec) {
     const [hx, hy] = HAND[rank];
     const behind = spec.object === 'swordBehind';
-
-    const hermes = !!spec.hermes;
+    const bob = !!spec.bob;
 
     if (rank === 'K') drawKingHairBack(ctx, pal);
     drawTorso(ctx, rank, pal);
-    if (hermes) drawAnimeHairBack(ctx, pal);
+    if (bob) drawBobHairBack(ctx);
     else if (rank === 'Q') drawQueenHair(ctx, pal);
 
-    if (rank === 'K') drawErmine(ctx);
+    if (bob) {
+      drawNeck(ctx);
+      drawHighCollar(ctx, pal);
+    } else if (rank === 'K') drawErmine(ctx);
     else if (rank === 'Q') drawRuff(ctx);
     else drawJackCollar(ctx, pal);
 
     if (behind) drawObject(ctx, spec.object, hx, hy, pal);
 
-    drawNeck(ctx);
-    if (hermes) {
-      drawAnimeHead(ctx);
-      drawAnimeFace(ctx, pal);
-      drawAnimeBangs(ctx, pal);
-      drawWingedCrown(ctx, pal);
+    if (bob) {
+      drawBobHead(ctx);
+      drawBobFace(ctx, pal);
+      drawBobBangs(ctx);
+      drawBobTiara(ctx, pal);
     } else {
+      drawNeck(ctx);
       drawHead(ctx, rank);
       drawFaceFeatures(ctx, rank, pal);
-    }
-
-    if (hermes) {
-      // cabeça, franja e coroa alada já saíram acima
-    } else if (rank === 'K') {
-      drawKingBeard(ctx, pal);
-      drawKingHairFront(ctx, pal);
-      drawKingCrown(ctx, pal);
-    } else if (rank === 'Q') {
-      drawQueenBangs(ctx, pal);
-      drawQueenCrown(ctx, pal);
-    } else {
-      drawJackHair(ctx, pal);
-      drawJackHat(ctx, pal);
+      if (rank === 'K') {
+        drawKingBeard(ctx, pal);
+        drawKingHairFront(ctx, pal);
+        drawKingCrown(ctx, pal);
+      } else if (rank === 'Q') {
+        drawQueenBangs(ctx, pal);
+        drawQueenCrown(ctx, pal);
+      } else {
+        drawJackHair(ctx, pal);
+        drawJackHat(ctx, pal);
+      }
     }
 
     drawArm(ctx, pal, hx, hy);
     if (!behind) drawObject(ctx, spec.object, hx, hy, pal);
     drawHand(ctx, hx, hy);
-  }
-
-  // --- Figura em bitmap (Truco.CardArt): a Dama de Copas usa a logo da Nous ------------
-  const artImages = {};
-  /** Imagem da arte, já carregada; senão null (a carta usa o desenho vetorial e é repintada ao carregar). */
-  function artImage(name) {
-    if (typeof Image === 'undefined') return null;
-    const src = Truco.CardArt && Truco.CardArt[name];
-    if (!src) return null;
-    let img = artImages[name];
-    if (!img) {
-      img = artImages[name] = new Image();
-      img.onload = () => repaintArt(name);
-      img.src = src;
-    }
-    return img.complete && img.naturalWidth ? img : null;
-  }
-
-  /** Metade da figura: a arte preenche a metade da moldura, com a tinta preta sobre o papel. */
-  function drawArtHalf(ctx, img, f, pal) {
-    const hw = f.w;
-    const hh = f.h / 2;
-    const s = Math.max(hw / img.naturalWidth, hh / img.naturalHeight) * 1.02;
-    const dw = img.naturalWidth * s;
-    const dh = img.naturalHeight * s;
-    ctx.save();
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(img, f.x + (hw - dw) / 2, f.y + hh - dh, dw, dh);
-    ctx.restore();
-    // faixa na cor do naipe na divisória, como as outras figuras
-    ctx.fillStyle = pal && pal.robe ? pal.robe : C.red;
-    ctx.fillRect(f.x, f.y + hh - 10, hw, 10);
-  }
-
-  function repaintArt(name) {
-    for (const key of Object.keys(COURT_SPECS)) {
-      if (COURT_SPECS[key].art !== name) continue;
-      const canvas = canvases.get(key);
-      if (!canvas) continue;
-      try {
-        paintKey(key, canvas);
-      } catch (e) {
-        report(e, 'arte da carta ' + key);
-        continue;
-      }
-      const tex = textures.get(key);
-      if (tex) tex.needsUpdate = true;
-    }
   }
 
   function drawCourt(ctx, rank, suit) {
@@ -2139,7 +2152,6 @@
     ctx.fillStyle = C.paperHi;
     ctx.fillRect(f.x, f.y, f.w, f.h);
 
-    const art = spec.art && artImage(spec.art);
     for (let half = 0; half < 2; half++) {
       ctx.save();
       if (half === 1) {
@@ -2149,17 +2161,12 @@
       ctx.beginPath();
       ctx.rect(f.x, f.y, f.w, f.h / 2);
       ctx.clip();
-      if (art) {
-        drawArtHalf(ctx, art, f, pal);
-        ctx.translate(W / 2, midY);
-      } else {
-        ctx.translate(W / 2, midY);
-        ctx.save();
-        if (spec.mirror) ctx.scale(-1, 1);
-        ctx.lineJoin = 'round';
-        drawFigure(ctx, rank, pal, spec);
-        ctx.restore();
-      }
+      ctx.translate(W / 2, midY);
+      ctx.save();
+      if (spec.mirror) ctx.scale(-1, 1);
+      ctx.lineJoin = 'round';
+      drawFigure(ctx, rank, pal, spec);
+      ctx.restore();
       // Pip da figura, do lado oposto ao objeto.
       const px = spec.mirror ? 124 : -124;
       drawPip(ctx, suit, px, -286, 22);

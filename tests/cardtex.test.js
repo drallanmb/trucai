@@ -1,7 +1,7 @@
 'use strict';
 // Testes das texturas das cartas (js/gfx/cardtex.js) com um canvas 2D falso que só registra as
 // chamadas: node --test tests/
-// Foco nos easter eggs (Qh anime, bananinha dos 2, Clawd no Ás de espadas): a carta continua
+// Foco nos easter eggs (Qh de chanel e fone, bananinha dos 2, Clawd no Ás de espadas): a carta continua
 // valendo o que diz — mesma contagem de pips, cores de naipe e nenhum texto extra.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -92,7 +92,7 @@ test('Ás de espadas: Clawd em pixel-art (fillRect em coordenadas inteiras), sem
   assert.deepEqual(texts.slice(-2), ['A', 'A'], 'índices A (desenhados por último; antes vem a fita)');
 });
 
-test('Dama de copas (anime/Hermes): mesmos índices e pips, nenhum texto extra', () => {
+test('Dama de copas (chanel, tiara e fone): mesmos índices e pips, nenhum texto extra', () => {
   const calls = paint('Qh');
   const texts = calls.filter((c) => c.name === 'fillText').map((c) => c.args[0]);
   assert.deepEqual(texts, ['Q', 'Q']);
