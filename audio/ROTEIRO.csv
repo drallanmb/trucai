@@ -1,0 +1,169 @@
+personagem,momento,arquivo,texto
+Tião,truco,audio/vozes/tiao/truco-1.mp3,"Truco, ladrão!"
+Tião,truco,audio/vozes/tiao/truco-2.mp3,Truco!
+Tião,truco,audio/vozes/tiao/truco-3.mp3,Truco! Quero ver ter peito.
+Tião,seis,audio/vozes/tiao/seis-1.mp3,"Seis, ladrão!"
+Tião,seis,audio/vozes/tiao/seis-2.mp3,Meio-pau!
+Tião,aceitar,audio/vozes/tiao/aceitar-1.mp3,Cai!
+Tião,aceitar,audio/vozes/tiao/aceitar-2.mp3,Manda que eu gosto.
+Tião,aceitar,audio/vozes/tiao/aceitar-3.mp3,"Pode vir, que eu tô sentado."
+Tião,correr,audio/vozes/tiao/correr-1.mp3,Corro... dessa vez.
+Tião,correr,audio/vozes/tiao/correr-2.mp3,Essa eu deixo passar.
+Tião,ganhouRodada,audio/vozes/tiao/ganhouRodada-1.mp3,A primeira vai à missa!
+Tião,ganhouRodada,audio/vozes/tiao/ganhouRodada-2.mp3,Olha a casinha de caboclo...
+Tião,perdeuRodada,audio/vozes/tiao/perdeuRodada-1.mp3,Deixa estar...
+Tião,perdeuRodada,audio/vozes/tiao/perdeuRodada-2.mp3,"Tá bom, essa é sua."
+Tião,cangou,audio/vozes/tiao/cangou-1.mp3,Cangou!
+Tião,cangou,audio/vozes/tiao/cangou-2.mp3,Embuchou!
+Tião,pensando,audio/vozes/tiao/pensando-1.mp3,Hmm...
+Tião,pensando,audio/vozes/tiao/pensando-2.mp3,Traz mais um pingado aí!
+Tião,ganhouPartida,audio/vozes/tiao/ganhouPartida-1.mp3,Quem perdeu paga o café!
+Tião,perdeuPartida,audio/vozes/tiao/perdeuPartida-1.mp3,Amanhã tem revanche.
+Tião,aceitar (para dona-cida),audio/vozes/tiao/para-dona-cida-aceitar-1.mp3,"Pode vir, Dona Cida!"
+Tião,ganhouRodada (para dona-cida),audio/vozes/tiao/para-dona-cida-ganhouRodada-1.mp3,"Essa foi pra senhora, Dona Cida!"
+Vini,truco,audio/vozes/vini/truco-1.mp3,Truco! Deploy em produção!
+Vini,truco,audio/vozes/vini/truco-2.mp3,Truco! Sobe pra main!
+Vini,truco,audio/vozes/vini/truco-3.mp3,Truco! Tá compilando?
+Vini,truco,audio/vozes/vini/truco-4.mp3,Truco! Roda aí pra ver.
+Vini,seis,audio/vozes/vini/seis-1.mp3,Seis! Escalou o servidor!
+Vini,seis,audio/vozes/vini/seis-2.mp3,Seis! Aumenta a carga!
+Vini,seis,audio/vozes/vini/seis-3.mp3,"Seis, que o teste passou!"
+Vini,nove,audio/vozes/vini/nove-1.mp3,Nove! Sem rollback!
+Vini,nove,audio/vozes/vini/nove-2.mp3,Nove! Vai direto pro ar!
+Vini,nove,audio/vozes/vini/nove-3.mp3,Nove! Confia no código!
+Vini,doze,audio/vozes/vini/doze-1.mp3,Doze! Commit final!
+Vini,doze,audio/vozes/vini/doze-2.mp3,Doze! É agora ou nunca!
+Vini,doze,audio/vozes/vini/doze-3.mp3,Doze! Push na sexta!
+Vini,aceitar,audio/vozes/vini/aceitar-1.mp3,"Cai, tá testado."
+Vini,aceitar,audio/vozes/vini/aceitar-2.mp3,"Pode vir, tá no log."
+Vini,aceitar,audio/vozes/vini/aceitar-3.mp3,Cai! Já revisei.
+Vini,aceitar,audio/vozes/vini/aceitar-4.mp3,"Manda, que eu debugo."
+Vini,correr,audio/vozes/vini/correr-1.mp3,Corro... deu bug.
+Vini,correr,audio/vozes/vini/correr-2.mp3,Essa não passou no teste.
+Vini,correr,audio/vozes/vini/correr-3.mp3,Corro. Volta pro backlog.
+Vini,correr,audio/vozes/vini/correr-4.mp3,Deu erro 500. Tô fora.
+Vini,ganhouRodada,audio/vozes/vini/ganhouRodada-1.mp3,Passou no teste!
+Vini,ganhouRodada,audio/vozes/vini/ganhouRodada-2.mp3,Build verde!
+Vini,ganhouRodada,audio/vozes/vini/ganhouRodada-3.mp3,Rodou de primeira!
+Vini,ganhouRodada,audio/vozes/vini/ganhouRodada-4.mp3,Essa foi limpa.
+Vini,perdeuRodada,audio/vozes/vini/perdeuRodada-1.mp3,Deu bug aqui.
+Vini,perdeuRodada,audio/vozes/vini/perdeuRodada-2.mp3,Faltou um teste...
+Vini,perdeuRodada,audio/vozes/vini/perdeuRodada-3.mp3,Anota no backlog.
+Vini,perdeuRodada,audio/vozes/vini/perdeuRodada-4.mp3,"Hmm, conflito de merge."
+Vini,cangou,audio/vozes/vini/cangou-1.mp3,Cangou! Empate técnico.
+Vini,cangou,audio/vozes/vini/cangou-2.mp3,Cangou! Deu timeout.
+Vini,cangou,audio/vozes/vini/cangou-3.mp3,Cangou! Roda de novo.
+Vini,ganhouMao,audio/vozes/vini/ganhouMao-1.mp3,Merge aprovado!
+Vini,ganhouMao,audio/vozes/vini/ganhouMao-2.mp3,"Pode marcar, parceiro!"
+Vini,ganhouMao,audio/vozes/vini/ganhouMao-3.mp3,Subiu sem erro!
+Vini,perdeuMao,audio/vozes/vini/perdeuMao-1.mp3,Bora refatorar.
+Vini,perdeuMao,audio/vozes/vini/perdeuMao-2.mp3,Próxima sprint é nossa.
+Vini,perdeuMao,audio/vozes/vini/perdeuMao-3.mp3,Anotado. Vamos corrigir.
+Vini,maoDeOnzeJoga,audio/vozes/vini/maoDeOnzeJoga-1.mp3,Bora rodar essa!
+Vini,maoDeOnzeJoga,audio/vozes/vini/maoDeOnzeJoga-2.mp3,Tá no ponto. Vamos jogar.
+Vini,maoDeOnzeJoga,audio/vozes/vini/maoDeOnzeJoga-3.mp3,Essa mão compila.
+Vini,maoDeOnzeCorre,audio/vozes/vini/maoDeOnzeCorre-1.mp3,Essa não compila.
+Vini,maoDeOnzeCorre,audio/vozes/vini/maoDeOnzeCorre-2.mp3,Melhor não subir essa.
+Vini,maoDeOnzeCorre,audio/vozes/vini/maoDeOnzeCorre-3.mp3,Volta pro rascunho.
+Vini,pensando,audio/vozes/vini/pensando-1.mp3,Carregando...
+Vini,pensando,audio/vozes/vini/pensando-2.mp3,Deixa eu ver o log...
+Vini,pensando,audio/vozes/vini/pensando-3.mp3,"Hmm, pensando no caso."
+Vini,ganhouPartida,audio/vozes/vini/ganhouPartida-1.mp3,Deploy feito! Café por conta de vocês.
+Vini,ganhouPartida,audio/vozes/vini/ganhouPartida-2.mp3,Partida em produção!
+Vini,ganhouPartida,audio/vozes/vini/ganhouPartida-3.mp3,"Zero bug. Valeu, parceiro!"
+Vini,perdeuPartida,audio/vozes/vini/perdeuPartida-1.mp3,Amanhã tem hotfix.
+Vini,perdeuPartida,audio/vozes/vini/perdeuPartida-2.mp3,Vou estudar o log.
+Vini,perdeuPartida,audio/vozes/vini/perdeuPartida-3.mp3,Revanche na próxima sprint.
+Vini,maoDeOnzeJoga (para tiao),audio/vozes/vini/para-tiao-maoDeOnzeJoga-1.mp3,"Bora, Seu Tião, sem medo!"
+Vini,maoDeOnzeJoga (para tiao),audio/vozes/vini/para-tiao-maoDeOnzeJoga-2.mp3,"Vamos nessa, Seu Tião!"
+Vini,maoDeOnzeCorre (para bia),audio/vozes/vini/para-bia-maoDeOnzeCorre-1.mp3,"Hoje não, Bia. Essa não compila."
+Vini,maoDeOnzeCorre (para bia),audio/vozes/vini/para-bia-maoDeOnzeCorre-2.mp3,"Essa fica pra você, Bia."
+Bia,truco,audio/vozes/bia/truco-1.mp3,"Truco! E aí, vai encarar?"
+Bia,truco,audio/vozes/bia/truco-2.mp3,Truco! Bora ver quem aguenta.
+Bia,truco,audio/vozes/bia/truco-3.mp3,Truco! Quero ver agora.
+Bia,truco,audio/vozes/bia/truco-4.mp3,Truco! Sem medo.
+Bia,seis,audio/vozes/bia/seis-1.mp3,Seis! Aguenta essa!
+Bia,seis,audio/vozes/bia/seis-2.mp3,Seis! Tá achando o quê?
+Bia,seis,audio/vozes/bia/seis-3.mp3,Seis! Vem pro jogo.
+Bia,nove,audio/vozes/bia/nove-1.mp3,Nove! Tô com tudo!
+Bia,nove,audio/vozes/bia/nove-2.mp3,Nove! Pode chorar depois.
+Bia,nove,audio/vozes/bia/nove-3.mp3,Nove! Sobe mais essa.
+Bia,doze,audio/vozes/bia/doze-1.mp3,Doze! Agora é pra valer!
+Bia,doze,audio/vozes/bia/doze-2.mp3,Doze! Vai ou racha!
+Bia,doze,audio/vozes/bia/doze-3.mp3,Doze! Tô confiante.
+Bia,aceitar,audio/vozes/bia/aceitar-1.mp3,Cai! Tô pronta.
+Bia,aceitar,audio/vozes/bia/aceitar-2.mp3,"Pode vir, tô de boa."
+Bia,aceitar,audio/vozes/bia/aceitar-3.mp3,"Cai, que eu seguro."
+Bia,aceitar,audio/vozes/bia/aceitar-4.mp3,Manda!
+Bia,correr,audio/vozes/bia/correr-1.mp3,Corro... essa não dá.
+Bia,correr,audio/vozes/bia/correr-2.mp3,"Passo essa, próxima é minha."
+Bia,correr,audio/vozes/bia/correr-3.mp3,"Corro, mas volto."
+Bia,ganhouRodada,audio/vozes/bia/ganhouRodada-1.mp3,Essa é minha!
+Bia,ganhouRodada,audio/vozes/bia/ganhouRodada-2.mp3,Anota aí!
+Bia,ganhouRodada,audio/vozes/bia/ganhouRodada-3.mp3,Olha a conta fechando!
+Bia,ganhouRodada,audio/vozes/bia/ganhouRodada-4.mp3,"Fácil, fácil."
+Bia,perdeuRodada,audio/vozes/bia/perdeuRodada-1.mp3,"Ah, qual é..."
+Bia,perdeuRodada,audio/vozes/bia/perdeuRodada-2.mp3,Calma que tem mais.
+Bia,perdeuRodada,audio/vozes/bia/perdeuRodada-3.mp3,"Foi sorte, hein."
+Bia,perdeuRodada,audio/vozes/bia/perdeuRodada-4.mp3,"Tá, essa foi boa."
+Bia,cangou,audio/vozes/bia/cangou-1.mp3,Cangou! Que tenso.
+Bia,cangou,audio/vozes/bia/cangou-2.mp3,Cangou! Tudo igual.
+Bia,cangou,audio/vozes/bia/cangou-3.mp3,"Empatou, gente!"
+Bia,ganhouMao,audio/vozes/bia/ganhouMao-1.mp3,Pode marcar!
+Bia,ganhouMao,audio/vozes/bia/ganhouMao-2.mp3,Mais um tento pra cá!
+Bia,ganhouMao,audio/vozes/bia/ganhouMao-3.mp3,Conta fechada!
+Bia,perdeuMao,audio/vozes/bia/perdeuMao-1.mp3,"Beleza, a próxima vem."
+Bia,perdeuMao,audio/vozes/bia/perdeuMao-2.mp3,Tô só esquentando.
+Bia,perdeuMao,audio/vozes/bia/perdeuMao-3.mp3,Vou lembrar dessa.
+Bia,maoDeOnzeJoga,audio/vozes/bia/maoDeOnzeJoga-1.mp3,Bora jogar essa!
+Bia,maoDeOnzeJoga,audio/vozes/bia/maoDeOnzeJoga-2.mp3,"Com essa mão, eu vou."
+Bia,maoDeOnzeCorre,audio/vozes/bia/maoDeOnzeCorre-1.mp3,"Essa não, gente."
+Bia,maoDeOnzeCorre,audio/vozes/bia/maoDeOnzeCorre-2.mp3,Melhor passar essa.
+Bia,pensando,audio/vozes/bia/pensando-1.mp3,"Pera, deixa eu contar..."
+Bia,pensando,audio/vozes/bia/pensando-2.mp3,Hmm...
+Bia,pensando,audio/vozes/bia/pensando-3.mp3,Qual saiu mesmo?
+Bia,ganhouPartida,audio/vozes/bia/ganhouPartida-1.mp3,Ganhei! Vô ia ter orgulho.
+Bia,ganhouPartida,audio/vozes/bia/ganhouPartida-2.mp3,É assim que se faz!
+Bia,ganhouPartida,audio/vozes/bia/ganhouPartida-3.mp3,Quem perdeu paga o açaí!
+Bia,perdeuPartida,audio/vozes/bia/perdeuPartida-1.mp3,"Revanche amanhã, hein!"
+Bia,perdeuPartida,audio/vozes/bia/perdeuPartida-2.mp3,Hoje não foi meu dia.
+Bia,perdeuPartida,audio/vozes/bia/perdeuPartida-3.mp3,Vou treinar com o vô.
+Bia,maoDeOnzeJoga (para vini),audio/vozes/bia/para-vini-maoDeOnzeJoga-1.mp3,"Pode vir, Vini. Tá testado?"
+Bia,maoDeOnzeJoga (para vini),audio/vozes/bia/para-vini-maoDeOnzeJoga-2.mp3,"Bora, Vini! Roda esse teste."
+Bia,maoDeOnzeCorre (para vini),audio/vozes/bia/para-vini-maoDeOnzeCorre-1.mp3,"Essa é sua, Vini. Aproveita."
+Bia,maoDeOnzeCorre (para vini),audio/vozes/bia/para-vini-maoDeOnzeCorre-2.mp3,"Passo essa, Vini."
+Dona Cida,truco,audio/vozes/dona-cida/truco-1.mp3,"Truco, meu filho."
+Dona Cida,truco,audio/vozes/dona-cida/truco-2.mp3,Truco! E não é blefe.
+Dona Cida,aceitar,audio/vozes/dona-cida/aceitar-1.mp3,"Cai, que eu seguro."
+Dona Cida,aceitar,audio/vozes/dona-cida/aceitar-2.mp3,Pode mandar.
+Dona Cida,correr,audio/vozes/dona-cida/correr-1.mp3,"Essa eu não quero, não."
+Dona Cida,correr,audio/vozes/dona-cida/correr-2.mp3,"Corro, e sem vergonha nenhuma."
+Dona Cida,ganhouRodada,audio/vozes/dona-cida/ganhouRodada-1.mp3,Devagar se vai longe.
+Dona Cida,ganhouRodada,audio/vozes/dona-cida/ganhouRodada-2.mp3,Essa é nossa.
+Dona Cida,ganhouMao,audio/vozes/dona-cida/ganhouMao-1.mp3,"Pode marcar, parceiro."
+Dona Cida,perdeuMao,audio/vozes/dona-cida/perdeuMao-1.mp3,Paciência. A próxima vem.
+Dona Cida,maoDeOnzeJoga,audio/vozes/dona-cida/maoDeOnzeJoga-1.mp3,"Vamos jogar, que dá."
+Dona Cida,maoDeOnzeCorre,audio/vozes/dona-cida/maoDeOnzeCorre-1.mp3,"Com essa mão, nem pensar."
+Dona Cida,ganhouPartida,audio/vozes/dona-cida/ganhouPartida-1.mp3,O café hoje é por conta de vocês.
+Dona Cida,aceitar (para tiao),audio/vozes/dona-cida/para-tiao-aceitar-1.mp3,"Cai, Tião, que eu conheço teu blefe."
+Dona Cida,correr (para tiao),audio/vozes/dona-cida/para-tiao-correr-1.mp3,"Pode levar, Tião. Hoje não."
+Juninho,truco,audio/vozes/juninho/truco-1.mp3,Truco! Bora!
+Juninho,truco,audio/vozes/juninho/truco-2.mp3,"Truco, truco, truco!"
+Juninho,aceitar,audio/vozes/juninho/aceitar-1.mp3,Cai dentro!
+Juninho,aceitar,audio/vozes/juninho/aceitar-2.mp3,Bora!
+Juninho,aceitar,audio/vozes/juninho/aceitar-3.mp3,Vem que tem!
+Juninho,correr,audio/vozes/juninho/correr-1.mp3,Tô fora dessa.
+Juninho,ganhouRodada,audio/vozes/juninho/ganhouRodada-1.mp3,Levei essa!
+Juninho,ganhouRodada,audio/vozes/juninho/ganhouRodada-2.mp3,Marreco é a vó!
+Juninho,perdeuRodada,audio/vozes/juninho/perdeuRodada-1.mp3,Ué?
+Juninho,perdeuRodada,audio/vozes/juninho/perdeuRodada-2.mp3,Foi sorte!
+Juninho,pensando,audio/vozes/juninho/pensando-1.mp3,"Pera, pera..."
+Juninho,pensando,audio/vozes/juninho/pensando-2.mp3,Qual era a manilha mesmo?
+Juninho,truco (para dona-cida),audio/vozes/juninho/para-dona-cida-truco-1.mp3,"Truco, Dona Cida! Com todo respeito."
+Você (quem joga),truco,audio/vozes/voce/truco-1.mp3,Truco!
+Você (quem joga),seis,audio/vozes/voce/seis-1.mp3,Seis!
+Você (quem joga),nove,audio/vozes/voce/nove-1.mp3,Nove!
+Você (quem joga),doze,audio/vozes/voce/doze-1.mp3,Doze!
+Você (quem joga),aceitar,audio/vozes/voce/aceitar-1.mp3,Cai!
+Você (quem joga),correr,audio/vozes/voce/correr-1.mp3,Corro!
+Você (quem joga),maoDeOnzeJoga,audio/vozes/voce/maoDeOnzeJoga-1.mp3,Vamos jogar!

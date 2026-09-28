@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TrucAÍ — prévia do HUD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  /* Cenário falso (DESIGN.md v2: mesa de cervejaria vermelha na calçada paulistana, à noite).
+     Só para enxergar o HUD sobre algo parecido com a cena 3D. */
+  .pv-scene {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 50% 38% at 50% 8%, rgba(255, 181, 107, 0.5) 0%, rgba(255, 181, 107, 0) 70%),
+      linear-gradient(180deg, #0f1622 0%, #1b1f2b 30%, #2a1f18 46%, #17110D 100%);
+  }
+  .pv-city {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 12%;
+    height: 26%;
+    background:
+      repeating-linear-gradient(90deg, rgba(255, 214, 140, 0.35) 0 3px, transparent 3px 11px) 0 0 / 100% 40%,
+      linear-gradient(180deg, transparent 0 20%, #232838 20% 100%);
+    -webkit-mask: linear-gradient(90deg, #000 0 12%, transparent 12% 16%, #000 16% 30%, transparent 30% 33%, #000 33% 58%, transparent 58% 64%, #000 64% 100%);
+    mask: linear-gradient(90deg, #000 0 12%, transparent 12% 16%, #000 16% 30%, transparent 30% 33%, #000 33% 58%, transparent 58% 64%, #000 64% 100%);
+    opacity: 0.8;
+  }
+  .pv-sign {
+    position: absolute;
+    left: 50%;
+    top: 5%;
+    translate: -50% 0;
+    font: 400 clamp(22px, 4vw, 40px)/1 'Shrikhand', Georgia, serif;
+    color: rgba(247, 241, 227, 0.5);
+    white-space: nowrap;
+  }
+  .pv-floor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 38%;
+    bottom: 0;
+    background:
+      repeating-conic-gradient(#d9d4c8 0 25%, #1c1c1f 0 50%) 0 0 / 56px 56px;
+    opacity: 0.35;
+  }
+  .pv-table {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    top: 42%;
+    bottom: -20%;
+    border-radius: 18px 18px 0 0;
+    background:
+      radial-gradient(ellipse 22% 14% at 50% 38%, rgba(242, 194, 48, 0.55) 0 45%, transparent 47%),
+      radial-gradient(ellipse 70% 55% at 50% 30%, #c9322a 0%, #B3261E 55%, #8b1c16 100%);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 6px #9c211a;
+  }
+  .pv-seat {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    margin: -32px 0 0 -32px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #d9a77f, #9b6a48);
+    box-shadow: 0 30px 0 12px #4a6fa5;
+  }
+  .pv-seat[data-seat="2"] { box-shadow: 0 30px 0 12px #b0463a; }
+  .pv-hand {
+    position: absolute;
+    left: 50%;
+    bottom: -3%;
+    height: 30%;
+    translate: -50% 0;
+    display: flex;
+    align-items: flex-end;
+  }
+  .pv-hand i {
+    display: block;
+    height: 100%;
+    aspect-ratio: 63 / 88;
+    margin: 0 -2.5vh;
+    border-radius: 8px;
+    background: #F7F1E3;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    transform-origin: 50% 120%;
+  }
+  .pv-hand i:nth-child(1) { rotate: -12deg; }
+  .pv-hand i:nth-child(3) { rotate: 12deg; }
+  .pv-zone {
+    position: absolute;
+    left: 33.333%;
+    width: 33.333%;
+    bottom: 0;
+    height: 33.333%;
+    outline: 2px dashed rgba(247, 241, 227, 0.45);
+    outline-offset: -2px;
+  }
+  .pv-bar {
+    position: fixed;
+    z-index: 50;
+    left: 50%;
+    bottom: 8px;
+    translate: -50% 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    max-width: calc(100vw - 16px);
+    padding: 6px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    font: 600 12px/1 system-ui, sans-serif;
+  }
+  .pv-bar button {
+    padding: 6px 8px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background: #222;
+    color: #eee;
+    cursor: pointer;
+  }
+  .pv-bar button[aria-current="true"] { background: #C9A15B; color: #17110D; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div class="pv-scene" aria-hidden="true">
+      <div class="pv-city"></div>
+      <div class="pv-floor"></div>
+      <div class="pv-sign">TRUCAÍ</div>
+      <div class="pv-table"></div>
+      <div class="pv-seats"></div>
+      <div class="pv-hand"><i></i><i></i><i></i></div>
+      <div class="pv-zone"></div>
+    </div>
+  </div>
+  <div id="hud"></div>
+</div>
+
+<script src="../js/ui/hud.js"></script>
+<script>
+(function () {
+  'use strict';
+  // Roteiro de estados do HUD: ?state=menu|game|call|response|onze|speech|banner|end|rules
+  // Extras: &players=2  &ferro=1  &bo3=1  &win=0  &kind=onze|ferro|info  &cardtex=1 (usa js/gfx/cardtex.js)
+  const params = new URLSearchParams(location.search);
+  const players = params.get('players') === '2' ? 2 : 4;
+  const NAMES = players === 2 ? ['Você', 'Tião'] : ['Você', 'Tião', 'Zeca', 'Dito'];
+  const LONG = 600000;
+  const seatsEl = document.querySelector('.pv-seats');
+  const hudEl = document.getElementById('hud');
+  const log = [];
+  let hud = null;
+
+  function seatPos(seat) {
+    const w = innerWidth;
+    const h = innerHeight;
+    const portrait = h > w;
+    if (seat === 0) return { x: w / 2, y: h };
+    if (players === 2) return { x: w / 2, y: h * 0.3 };
+    if (seat === 2) return { x: w / 2, y: h * 0.3 };
+    const side = portrait ? 0.14 : 0.12;
+    return { x: seat === 1 ? w * (1 - side) : w * side, y: h * (portrait ? 0.41 : 0.44) };
+  }
+
+  function drawSeats() {
+    seatsEl.textContent = '';
+    for (let s = 1; s < players; s++) {
+      const p = seatPos(s);
+      const d = document.createElement('div');
+      d.className = 'pv-seat';
+      d.dataset.seat = String(s);
+      d.style.left = p.x + 'px';
+      d.style.top = p.y + 'px';
+      seatsEl.appendChild(d);
+    }
+  }
+
+  function freshHud() {
+    if (hud) hud.destroy();
+    hud = Truco.HUD.create(hudEl);
+    hud.setNames(NAMES);
+    hud.setSeatPosProvider(seatPos);
+    hud.onAction((a, i) => log.push(i === undefined ? a : a + ':' + i));
+    hud.onSettings((s) => log.push('settings:' + JSON.stringify(s)));
+    window.__preview.hud = hud;
+    return hud;
+  }
+
+  const C = (id) => id;
+  function baseGame(opts) {
+    const o = opts || {};
+    const ferro = params.get('ferro') === '1';
+    const bo3 = params.get('bo3') === '1';
+    hud.setScore(o.score || (ferro ? [11, 11] : [5, 7]), bo3 ? [1, 0] : undefined);
+    hud.setHandInfo({
+      value: o.value || (ferro ? 1 : 3),
+      vira: o.vira || C('Qh'),
+      manilhaRank: o.manilhaRank || 'J',
+      special: o.special || (ferro ? 'maoDeFerro' : null),
+      roundResults: o.rounds || [0, 'tie', null],
+      dealerName: NAMES[players - 1],
+      maoName: NAMES[0],
+    });
+  }
+
+  const STATES = {
+    menu() {
+      hud.showMenu({}).then((s) => log.push('menu:' + JSON.stringify(s)));
+    },
+    game() {
+      baseGame({ value: 1, rounds: [1, null, null] });
+      hud.setActions({ visible: false });
+      hud.setStatus(NAMES[1] + ' pensando…');
+      hud.toast('Tião levou a 1ª rodada', { kind: 'bad', ms: LONG });
+    },
+    call() {
+      baseGame();
+      hud.setActions({ visible: true, canCall: true, callName: 'Seis', canFaceDown: true, faceDown: params.get('face') === '1' });
+      hud.setStatus('Sua vez');
+      hud.toast('Cangou! A próxima decide', { kind: 'neutral', ms: LONG });
+      hud.toast('Nós fizemos a 1ª', { kind: 'good', ms: LONG });
+    },
+    response() {
+      baseGame({ value: 1, rounds: [null, null, null] });
+      hud.setStatus(NAMES[1] + ' pediu truco');
+      hud.askCallResponse({
+        callerName: NAMES[1], callName: 'Truco', proposedValue: 3, currentValue: 1,
+        canRaise: true, raiseName: 'Seis', advice: players === 4 ? 'accept' : null,
+      }).then((r) => log.push('response:' + r));
+    },
+    onze() {
+      baseGame({ score: [11, 7], value: 3, special: 'maoDeOnze', rounds: [null, null, null], vira: 'Kd', manilhaRank: 'A' });
+      hud.askMaoDeOnze({
+        myCards: [C('Ac'), C('3h'), C('Qs')],
+        partnerCards: players === 4 ? [C('2d'), C('Jh'), C('Ad')] : null,
+        advice: players === 4 ? 'accept' : null,
+      }).then((r) => log.push('onze:' + r));
+    },
+    speech() {
+      baseGame();
+      hud.setActions({ visible: true, canCall: true, callName: 'Truco', canFaceDown: false });
+      hud.setStatus('Sua vez');
+      if (players === 4) {
+        hud.speech(1, 'Truco, marreco!', { shout: true, ms: LONG });
+        hud.speech(2, 'Tô com uma mão boa, parceiro.', { ms: LONG });
+        hud.speech(3, 'Casinha de caboclo…', { ms: LONG });
+      } else {
+        hud.speech(1, 'Truco, marreco!', { shout: true, ms: LONG });
+      }
+      hud.speech(0, 'Cai!', { ms: LONG });
+    },
+    banner() {
+      baseGame();
+      const kind = params.get('kind') || 'truco';
+      const text = { truco: 'TRUCO!', onze: 'MÃO DE ONZE', ferro: 'MÃO DE FERRO', info: 'CANGOU!' }[kind] || 'TRUCO!';
+      const sub = { onze: 'Nós decidimos: jogar ou correr', ferro: 'Todo mundo às cegas' }[kind];
+      hud.banner(text, { kind, ms: LONG, sub });
+    },
+    end() {
+      baseGame({ score: [12, 7] });
+      const win = params.get('win') !== '0';
+      hud.showMatchEnd({
+        winnerTeam: win ? 0 : 1,
+        score: win ? [13, 7] : [8, 12],
+        gamesWon: params.get('bo3') === '1' ? (win ? [2, 1] : [0, 2]) : undefined,
+      }).then((r) => log.push('end:' + r));
+    },
+    rules() {
+      baseGame();
+      hud.showRules().then(() => log.push('rules:closed'));
+    },
+  };
+
+  // Verificação automática: elementos não modais fora do terço central inferior,
+  // nada vazando da tela e nenhum texto cortado.
+  function check() {
+    // Mede o estado final: conclui as animações finitas em andamento.
+    document.getAnimations().forEach((a) => {
+      const end = a.effect && a.effect.getComputedTiming().endTime;
+      if (Number.isFinite(end)) a.finish();
+    });
+    const W = innerWidth;
+    const H = innerHeight;
+    const zone = { left: W / 3, right: (W * 2) / 3, top: (H * 2) / 3, bottom: H };
+    const hit = (r, z) => r.left < z.right - 0.5 && r.right > z.left + 0.5 && r.top < z.bottom - 0.5 && r.bottom > z.top + 0.5;
+    const visible = (n) => {
+      const r = n.getBoundingClientRect();
+      if (!r.width || !r.height) return false;
+      const cs = getComputedStyle(n);
+      return cs.visibility !== 'hidden' && Number(cs.opacity) > 0.01 && !n.closest('.hud.has-menu .hud-game');
+    };
+    const inModal = (n) => !!n.closest('.dialog-overlay, .menu-overlay, .rules-overlay');
+    const name = (n) => n.tagName.toLowerCase() + (n.className && typeof n.className === 'string' ? '.' + n.className.trim().split(/\s+/).join('.') : '');
+    const zoneHits = [];
+    const offscreen = [];
+    const cut = [];
+    const sel = '.hud-panel, .icon-btn, .hud-status, .btn-truco, .btn-facedown, .balloon, .banner-text, .banner-sub, .toast';
+    document.querySelectorAll('#hud ' + sel).forEach((n) => {
+      if (!visible(n) || inModal(n)) return;
+      const r = n.getBoundingClientRect();
+      if (hit(r, zone)) zoneHits.push(name(n));
+    });
+    document.querySelectorAll('#hud *').forEach((n) => {
+      if (!visible(n) || n.closest('.sr-only')) return;
+      const r = n.getBoundingClientRect();
+      const scroller = n.closest('.rules-body, .menu-overlay, .dialog-overlay');
+      if (!scroller && (r.left < -1 || r.right > W + 1 || r.top < -1 || r.bottom > H + 1)) offscreen.push(name(n));
+      if (n.children.length === 0 && n.textContent.trim() && n.scrollWidth > n.clientWidth + 1 && getComputedStyle(n).overflow !== 'visible') {
+        cut.push(name(n) + ' "' + n.textContent.trim().slice(0, 30) + '"');
+      }
+    });
+    const scrollers = [];
+    document.querySelectorAll('.menu-overlay, .dialog-overlay, .rules-body').forEach((n) => {
+      if (n.scrollHeight > n.clientHeight + 1) scrollers.push(name(n) + ' ' + n.scrollHeight + '>' + n.clientHeight);
+    });
+    return {
+      viewport: W + 'x' + H,
+      hScroll: document.documentElement.scrollWidth > W || document.body.scrollWidth > W,
+      zoneHits,
+      offscreen: offscreen.slice(0, 20),
+      cut,
+      scrollers,
+      fonts: document.fonts ? document.fonts.status : 'n/a',
+    };
+  }
+
+  function run(state) {
+    freshHud();
+    const fn = STATES[state] || STATES.game;
+    fn();
+    window.__preview.state = state;
+    document.querySelectorAll('.pv-bar button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.state === state)));
+  }
+
+  window.__preview = { hud: null, log, run, check, states: Object.keys(STATES) };
+
+  function start() {
+    drawSeats();
+    addEventListener('resize', drawSeats);
+    const state = params.get('state');
+    if (!state) {
+      const bar = document.createElement('nav');
+      bar.className = 'pv-bar';
+      bar.setAttribute('aria-label', 'Estados da prévia');
+      Object.keys(STATES).forEach((s) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = s;
+        b.dataset.state = s;
+        b.addEventListener('click', () => run(s));
+        bar.appendChild(b);
+      });
+      document.body.appendChild(bar);
+    }
+    run(state || 'game');
+    window.__preview.ready = true;
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = resolve;
+      document.head.appendChild(s);
+    });
+  }
+
+  const fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready.catch(() => null) : Promise.resolve();
+  if (params.get('cardtex') === '1') {
+    loadScript('https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js')
+      .then(() => loadScript('../js/gfx/cardtex.js'))
+      .then(() => (window.Truco.CardTex && Truco.CardTex.ready ? Truco.CardTex.ready().catch(() => null) : null))
+      .then(() => fontsReady)
+      .then(start);
+  } else {
+    fontsReady.then(start);
+  }
+})();
+</script>
+</body>
+</html>

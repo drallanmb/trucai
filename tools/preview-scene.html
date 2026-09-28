@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>TrucAÍ — Prévia da cena 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=Shrikhand&display=swap">
+  <style>
+    :root {
+      --ink: #17110D;
+      --espresso: #2B1D14;
+      --crema: #EBDDBF;
+      --brass: #C9A15B;
+      --muted: #A8927A;
+    }
+    html, body { margin: 0; height: 100%; background: var(--ink); overflow: hidden; }
+    #app { position: fixed; inset: 0; }
+    #stage { position: absolute; inset: 0; }
+    #hud { position: absolute; inset: 0; pointer-events: none; color: var(--crema); font-family: Barlow, system-ui, sans-serif; }
+    .panel {
+      position: absolute; top: 12px; left: 12px; max-width: calc(100% - 24px); box-sizing: border-box;
+      background: rgba(43, 29, 20, 0.88); border: 1px solid rgba(201, 161, 91, 0.3); border-radius: 10px;
+      padding: 8px 12px; font: 600 13px/1.3 "Barlow Condensed", "Arial Narrow", sans-serif;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .panel b { color: var(--brass); font-weight: 700; }
+    .tag {
+      position: absolute; transform: translate(-50%, -100%); white-space: nowrap;
+      background: rgba(43, 29, 20, 0.8); border: 1px solid rgba(201, 161, 91, 0.3); border-radius: 8px;
+      padding: 2px 8px; font: 600 12px "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .06em;
+    }
+    .tag[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="stage"></div>
+    <div id="hud">
+      <div class="panel" id="status">Carregando…</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      'use strict';
+      const FILES = [
+        ['https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js', false],
+        ['../js/gfx/tween.js', false],
+        ['../js/gfx/cardtex.js', true],
+        ['../js/gfx/table.js', false],
+        ['../js/gfx/world.js', false],
+        ['../js/gfx/avatars.js', false],
+        ['../js/gfx/cards3d.js', false],
+        ['../js/gfx/scene.js', false],
+        ['../js/core/rules.js', true],
+        ['../js/core/engine.js', true],
+      ];
+
+      const params = new URLSearchParams(location.search);
+      const stopAt = params.has('step') ? Number(params.get('step')) : Infinity;
+      const hold = params.get('hold') === '1';
+      const speed = Number(params.get('speed')) || 1;
+      const quality = params.get('quality') === 'low' ? 'low' : 'high';
+      const useEngine = params.get('engine') === '1';
+      const skip = params.get('nocardtex') === '1' ? ['../js/gfx/cardtex.js'] : [];
+      // Câmera de inspeção: ?orbit=1&cam=x,y,z&look=x,y,z&fov=N (arrastar gira, Shift+arrastar desloca, roda aproxima).
+      const orbitOn = params.get('orbit') === '1';
+      const vec3Param = (name) => {
+        const v = (params.get(name) || '').split(',').map(Number);
+        return v.length === 3 && v.every(isFinite) ? v : null;
+      };
+      // Estilos dos avatares para inspeção: ?styles=bigode,coque,topete (assentos 1, 2, 3) e ?outfits=listrada,lisa,time.
+      const styleList = (params.get('styles') || '').split(',').filter(Boolean);
+      const outfitList = (params.get('outfits') || '').split(',').filter(Boolean);
+
+      const P = (window.__preview = {
+        done: false, step: -1, stepName: '', idle: false, holding: false,
+        plays: [], sfx: {}, errors: [], loaded: [], missing: [], steps: [],
+      });
+      window.addEventListener('error', (e) => P.errors.push(String(e.message || e)));
+      window.addEventListener('unhandledrejection', (e) => P.errors.push(String(e.reason && e.reason.message || e.reason)));
+
+      const statusEl = document.getElementById('status');
+      function status(html) { statusEl.innerHTML = html; }
+
+      function load(src) {
+        return new Promise((resolve) => {
+          const s = document.createElement('script');
+          s.src = src;
+          s.onload = () => resolve(true);
+          s.onerror = () => resolve(false);
+          document.head.appendChild(s);
+        });
+      }
+
+      // Mãos fixas (baralho limpo, vira K♦ → manilha A). Rodadas: 0 ganha, 1 ganha, 0 ganha com o zap.
+      const H4 = [
+        ['3h', '2d', 'Ac'],
+        ['2c', 'As', 'Qh'],
+        ['Qd', 'Jc', 'Kh'],
+        ['2h', 'Js', 'Qs'],
+      ];
+      const ROUNDS4 = [
+        { plays: [[0, '3h'], [1, '2c'], [2, 'Qd'], [3, '2h']], winner: 0 },
+        { plays: [[0, '2d'], [1, 'As'], [2, 'Jc'], [3, 'Js', true]], winner: 1 },
+        { plays: [[1, 'Qh'], [2, 'Kh'], [3, 'Qs'], [0, 'Ac']], winner: 0 },
+      ];
+      // 1×1, baralho sujo, mão de ferro (às cegas). Vira 6♣ → manilha 7.
+      const H2 = [
+        ['Kh', '4d', 'Qc'],
+        ['Ks', 'Jd', '5s'],
+      ];
+
+      const AVATARS4 = [
+        { seat: 1, name: 'Tião', shirt: '#2F5D8A', skin: '#b5835a', hair: '#8a8580', style: 'bigode' },
+        { seat: 2, name: 'Dona Cida', shirt: '#9B3B2E', skin: '#e0b48e', hair: '#5a3a24', style: 'coque' },
+        { seat: 3, name: 'Zé', shirt: '#3E6B45', skin: '#8d5a3b', hair: '#1c1512', style: 'topete' },
+      ];
+      const AVATARS2 = [{ seat: 1, name: 'Nenê', shirt: '#C9A15B', skin: '#c68a5e', hair: '#2b1d14', style: 'bone' }];
+      AVATARS4.forEach((a, i) => {
+        if (styleList[i]) a.style = styleList[i];
+        if (outfitList[i]) a.outfit = outfitList[i];
+      });
+      if (styleList[3]) AVATARS2[0].style = styleList[3];
+      // ?specs=[{...},{...},{...}]: spec completo (formato da ficha) dos assentos 1, 2 e 3, por cima dos acima.
+      try {
+        const specs = JSON.parse(params.get('specs') || '[]');
+        specs.forEach((sp, i) => { if (sp && AVATARS4[i]) AVATARS4[i] = Object.assign({ seat: i + 1 }, sp); });
+      } catch (e) { P.errors.push('specs: ' + e.message); }
+
+      let scene = null;
+      let engineState = null;
+      const names = {};
+
+      function wait(seconds) { return window.Truco.Tween.delay(seconds); }
+
+      function cardId(c) { return typeof c === 'string' ? c : c.id; }
+
+      async function engineRound(roundIndex) {
+        const E = window.Truco.Engine;
+        for (let guard = 0; guard < 12; guard++) {
+          const d = E.getDecision(engineState);
+          if (d.kind !== 'play') return;
+          const action = { type: 'PLAY', seat: d.seat, cardId: d.playableCardIds[0] };
+          const events = E.apply(engineState, action);
+          let ended = false;
+          for (const ev of events) {
+            if (ev.type === 'cardPlayed') await scene.playCard(ev.seat, ev.card, { faceDown: ev.faceDown, roundIndex: ev.roundIndex });
+            else if (ev.type === 'roundEnded') { await scene.markRoundWinner(ev.roundIndex, ev.winnerSeat); ended = true; }
+            else if (ev.type === 'handEnded') { await scene.setScore(ev.score, { animate: true }); return; }
+          }
+          if (ended && roundIndex != null) return;
+        }
+      }
+
+      const STEPS = [
+        ['setup 4 jogadores', async () => {
+          scene.setup({ players: 4, avatars: AVATARS4 });
+          AVATARS4.forEach((a) => (names[a.seat] = a.name));
+          names[0] = 'Você';
+          await scene.setScore([0, 0], { animate: false });
+          await wait(0.4);
+        }],
+        ['distribuir (limpo, 24)', async () => {
+          if (useEngine && window.Truco.Engine) {
+            const E = window.Truco.Engine;
+            engineState = E.createMatch({ players: 4, seed: 11, firstDealer: 3, options: { deck: 'limpo' } });
+            const hs = E.apply(engineState, { type: 'START_HAND' }).find((e) => e.type === 'handStarted');
+            P.engineHand = hs;
+            await scene.dealHand({ dealer: hs.dealer, hands: hs.hands, vira: hs.vira, blind: false, deckSize: 24 });
+          } else {
+            await scene.dealHand({ dealer: 3, hands: H4, vira: 'Kd', blind: false, deckSize: 24 });
+          }
+        }],
+        ['sua vez (manilha destacada)', async () => {
+          const hand = P.engineHand ? P.engineHand.hands[0] : H4[0];
+          const manilha = P.engineHand ? P.engineHand.manilhaRank : 'A';
+          scene.setHumanHand(hand, { interactive: true, playableIds: hand.map(cardId), highlightManilhas: true, manilhaRank: manilha });
+          scene.setTurn(0);
+          await wait(0.8);
+        }],
+        ['modo encobrir', async () => {
+          scene.setFaceDownMode(true);
+          await wait(0.9);
+          scene.setFaceDownMode(false);
+          await wait(0.3);
+        }],
+        ['mão de onze: parceiro mostra', async () => {
+          const partner = P.engineHand ? P.engineHand.hands[2] : H4[2];
+          await scene.showPartnerHand(partner);
+          await wait(0.9);
+          await scene.showPartnerHand(null);
+        }],
+        ['rodada 1', async () => roundStep(0)],
+        ['rodada 2', async () => roundStep(1)],
+        ['rodada 3', async () => roundStep(2)],
+        ['placar de tampinhas', async () => {
+          scene.setTurn(null);
+          if (!P.engineHand) await scene.setScore([3, 1], { animate: true });
+          await wait(0.3);
+        }],
+        ['recolher', async () => { await scene.clearTable(); }],
+        ['setup 2 jogadores', async () => {
+          scene.setup({ players: 2, avatars: AVATARS2 });
+          names[1] = AVATARS2[0].name;
+          delete names[2];
+          delete names[3];
+          await wait(0.3);
+        }],
+        ['distribuir (sujo, 40, mão de ferro)', async () => {
+          await scene.dealHand({ dealer: 1, hands: H2, vira: '6c', blind: true, deckSize: 40 });
+        }],
+        ['mão cega', async () => {
+          scene.setHumanHand([{ hidden: true }, { hidden: true }, { hidden: true }], { interactive: true });
+          scene.setTurn(0);
+          scene.avatarAct(1, 'think');
+          await wait(0.8);
+        }],
+        ['jogada às cegas + empate', async () => {
+          await scene.playCard(0, 'Kh', { roundIndex: 0, handIndex: 0 });
+          scene.setTurn(1);
+          await scene.playCard(1, 'Ks', { roundIndex: 0 });
+          scene.cameraPunch();
+          await scene.markRoundWinner(0, null);
+          scene.setTurn(null);
+          await wait(0.4);
+        }],
+      ];
+      P.steps = STEPS.map((s) => s[0]);
+
+      async function roundStep(r) {
+        if (P.engineHand && engineState) {
+          await engineRound(r);
+          return;
+        }
+        const round = ROUNDS4[r];
+        const humanLeft = () => H4[0].filter((id) => !ROUNDS4.slice(0, r).some((x) => x.plays.some((p) => p[1] === id)));
+        for (const [seat, id, faceDown] of round.plays) {
+          scene.setTurn(seat);
+          if (seat === 0) {
+            const left = humanLeft();
+            scene.setHumanHand(left, { interactive: true, playableIds: left, highlightManilhas: true, manilhaRank: 'A' });
+            await wait(0.35);
+          } else {
+            if (seat === 3 && r === 1) scene.avatarAct(3, 'think');
+            await wait(0.25);
+          }
+          await scene.playCard(seat, id, { roundIndex: r, faceDown: !!faceDown });
+          if (seat === 0) {
+            const left = humanLeft().filter((c) => c !== id);
+            scene.setHumanHand(left, { interactive: false, highlightManilhas: true, manilhaRank: 'A' });
+          }
+        }
+        scene.setTurn(null);
+        await scene.markRoundWinner(r, round.winner);
+        if (round.winner === 1) scene.avatarAct(1, 'win');
+        else scene.avatarAct(2, 'nod');
+        await wait(0.3);
+      }
+
+      /** Câmera livre para inspecionar o cenário: substitui a pose da câmera só na hora de desenhar. */
+      function setupOrbit() {
+        const THREE = window.THREE;
+        const cam = scene.getCamera();
+        const renderer = scene.getRenderer();
+        const look = new THREE.Vector3().fromArray(vec3Param('look') || [0, 0, 0]);
+        const start = new THREE.Vector3().fromArray(vec3Param('cam') || cam.position.toArray());
+        const off = start.clone().sub(look);
+        const sph = new THREE.Spherical().setFromVector3(off);
+        const fov = Number(params.get('fov')) || cam.fov;
+        let active = false;
+        let drag = null;
+        const hidden = [];
+        const baseRender = renderer.render.bind(renderer);
+        renderer.render = (sc, c) => {
+          if (!active || c !== cam) return baseRender(sc, c);
+          const pos = new THREE.Vector3().setFromSpherical(sph).add(look);
+          cam.position.copy(pos);
+          cam.up.set(0, 1, 0);
+          cam.lookAt(look);
+          cam.fov = fov;
+          cam.updateProjectionMatrix();
+          cam.updateMatrixWorld(true);
+          cam.children.forEach((ch) => {
+            if (ch.visible) {
+              ch.visible = false;
+              hidden.push(ch);
+            }
+          });
+          baseRender(sc, c);
+          hidden.forEach((ch) => (ch.visible = true));
+          hidden.length = 0;
+        };
+        const el = renderer.domElement;
+        el.addEventListener('pointerdown', (e) => {
+          drag = { x: e.clientX, y: e.clientY, pan: e.shiftKey || e.button === 2 };
+        });
+        window.addEventListener('pointerup', () => (drag = null));
+        window.addEventListener('pointermove', (e) => {
+          if (!drag) return;
+          const dx = e.clientX - drag.x;
+          const dy = e.clientY - drag.y;
+          drag.x = e.clientX;
+          drag.y = e.clientY;
+          if (drag.pan) {
+            const right = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0);
+            const up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1);
+            const k = sph.radius * 0.0015;
+            look.addScaledVector(right, -dx * k).addScaledVector(up, dy * k);
+          } else {
+            sph.theta -= dx * 0.005;
+            sph.phi = Math.min(Math.PI - 0.05, Math.max(0.05, sph.phi - dy * 0.005));
+          }
+        });
+        el.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          sph.radius = Math.min(400, Math.max(0.3, sph.radius * Math.exp(e.deltaY * 0.001)));
+        }, { passive: false });
+        // Deixa o fundo distante calcular a pose do jogo antes de congelá-lo e liberar a câmera livre.
+        setTimeout(() => {
+          if (params.get('backdrop') !== 'follow') scene.worldEvent('debugBackdrop', { freeze: true });
+          active = true;
+        }, 400);
+        window.__orbit = {
+          set(camArr, lookArr) {
+            if (lookArr) look.fromArray(lookArr);
+            if (camArr) sph.setFromVector3(new THREE.Vector3().fromArray(camArr).sub(look));
+          },
+          get: () => ({ cam: new THREE.Vector3().setFromSpherical(sph).add(look).toArray(), look: look.toArray(), active }),
+        };
+      }
+
+      function updateTags() {
+        if (scene) {
+          for (const seat of Object.keys(names)) {
+            let el = document.getElementById('tag-' + seat);
+            if (!el) {
+              el = document.createElement('div');
+              el.className = 'tag';
+              el.id = 'tag-' + seat;
+              document.getElementById('hud').appendChild(el);
+            }
+            const p = scene.seatScreenPos(Number(seat));
+            el.textContent = names[seat];
+            el.style.left = p.x + 'px';
+            el.style.top = p.y + 'px';
+          }
+          document.querySelectorAll('.tag').forEach((el) => {
+            el.hidden = !(el.id.slice(4) in names);
+          });
+        }
+        requestAnimationFrame(updateTags);
+      }
+
+      async function main() {
+        for (const [src, optional] of FILES) {
+          if (skip.indexOf(src) >= 0) continue;
+          const ok = await load(src);
+          (ok ? P.loaded : P.missing).push(src);
+          if (!ok && !optional) {
+            status('<b>Erro</b> ao carregar ' + src);
+            P.errors.push('faltou ' + src);
+            return;
+          }
+        }
+        const T = window.Truco;
+        if (T.CardTex && T.CardTex.ready) await Promise.race([T.CardTex.ready(), new Promise((r) => setTimeout(r, 4000))]);
+        else if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 3000))]);
+        scene = T.Scene.create(document.getElementById('stage'), { players: 4, quality });
+        scene.setSpeed(speed);
+        window.__scene = scene;
+        scene.onHumanPlay((id, info) => P.plays.push({ id, index: info && info.index }));
+        scene.onSfx((name) => { P.sfx[name] = (P.sfx[name] || 0) + 1; });
+        if (orbitOn) setupOrbit();
+        else updateTags();
+        for (let i = 0; i < STEPS.length; i++) {
+          const [name, fn] = STEPS[i];
+          P.step = i;
+          P.stepName = name;
+          P.idle = false;
+          status('Passo <b>' + i + '</b> · ' + name);
+          try {
+            await fn();
+          } catch (err) {
+            P.errors.push(name + ': ' + (err && err.message || err));
+            status('<b>Erro</b> no passo ' + i + ': ' + (err && err.message || err));
+          }
+          P.idle = true;
+          if (i >= stopAt && hold) {
+            P.holding = true;
+            status('Passo <b>' + i + '</b> · ' + name + ' · congelado');
+            return;
+          }
+        }
+        P.done = true;
+        status('Roteiro concluído · <b>' + STEPS.length + '</b> passos');
+      }
+
+      main();
+    })();
+  </script>
+</body>
+</html>

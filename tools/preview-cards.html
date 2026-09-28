@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrucAÍ — Prévia do baralho</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Condensed:wght@600;700&family=Shrikhand&display=swap">
+  <style>
+    :root {
+      --felt: #1E4A38;
+      --felt-deep: #12301F;
+      --crema: #EBDDBF;
+      --muted: #A8927A;
+      --brass: #C9A15B;
+      --ink: #17110D;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background:
+        radial-gradient(ellipse at 50% 35%, rgba(255, 214, 150, 0.10), rgba(0, 0, 0, 0) 60%),
+        radial-gradient(ellipse at 50% 50%, var(--felt) 0%, var(--felt-deep) 100%);
+      background-color: var(--felt);
+      color: var(--crema);
+      font-family: Barlow, system-ui, sans-serif;
+      padding: 20px 24px 40px;
+    }
+    header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+    h1 { font-family: Shrikhand, Georgia, serif; font-weight: 400; font-size: 30px; margin: 0; color: var(--crema); }
+    header p { margin: 0; color: var(--muted); font-size: 14px; }
+    header a { color: var(--brass); }
+    h2 {
+      font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .08em; font-size: 14px; color: var(--muted);
+      margin: 18px 0 8px;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    figure canvas {
+      display: block; width: var(--card-w, 124px); height: auto;
+      filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
+    }
+    figcaption {
+      font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 600;
+      font-size: 12px; letter-spacing: .06em; color: var(--muted);
+    }
+    .tiny figure canvas { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
+    #stage3d { width: 100%; height: 640px; display: block; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TrucAÍ</h1>
+    <p>Prévia do baralho — 40 faces + verso, desenhados em canvas por <code>Truco.CardTex</code>.
+      Parâmetros: <a href="?zoom=courts">?zoom=courts</a> · <a href="?zoom=A">?zoom=A</a> ·
+      <a href="?zoom=Q">?zoom=Q</a> · <a href="?zoom=back,As">?zoom=back,As</a> · <a href="?mode=3d">?mode=3d</a></p>
+  </header>
+  <main id="main"></main>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+  <script src="../js/gfx/cardart.js"></script>
+  <script src="../js/gfx/cardtex.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const state = (window.__preview = { done: false, errors: [], cards: 0, timings: {} });
+      window.addEventListener('error', (e) => state.errors.push(String(e.message || e)));
+
+      const CardTex = window.Truco && window.Truco.CardTex;
+      const main = document.getElementById('main');
+      const params = new URLSearchParams(location.search);
+      const RANKS = ['4', '5', '6', '7', 'Q', 'J', 'K', 'A', '2', '3'];
+      const SUITS = [['c', 'Paus'], ['h', 'Copas'], ['s', 'Espadas'], ['d', 'Ouros']];
+      const SUIT_NAMES = { c: 'Paus', h: 'Copas', s: 'Espadas', d: 'Ouros' };
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+      function section(title, cssWidth, extraClass) {
+        const h = document.createElement('h2');
+        h.textContent = title;
+        const row = document.createElement('div');
+        row.className = 'row' + (extraClass ? ' ' + extraClass : '');
+        row.style.setProperty('--card-w', cssWidth + 'px');
+        main.append(h, row);
+        return row;
+      }
+
+      function addCard(row, id, cssWidth, caption) {
+        const fig = document.createElement('figure');
+        const width = Math.round(cssWidth * dpr);
+        const canvas = id === 'back' ? CardTex.backCanvas({ width }) : CardTex.faceCanvas(id, { width });
+        canvas.dataset.card = id;
+        fig.appendChild(canvas);
+        if (caption) {
+          const cap = document.createElement('figcaption');
+          cap.textContent = caption;
+          fig.appendChild(cap);
+        }
+        row.appendChild(fig);
+        state.cards++;
+      }
+
+      function expandZoom(tokens) {
+        const ids = [];
+        for (const raw of tokens) {
+          const t = raw.trim();
+          if (!t) continue;
+          if (t === 'courts' || t === 'figuras') {
+            for (const r of ['J', 'Q', 'K']) for (const [s] of SUITS) ids.push(r + s);
+          } else if (t === 'back' || t === 'verso') ids.push('back');
+          else if (t === 'all') {
+            for (const [s] of SUITS) for (const r of RANKS) ids.push(r + s);
+          } else if (RANKS.includes(t.toUpperCase())) {
+            for (const [s] of SUITS) ids.push(t.toUpperCase() + s);
+          } else ids.push(t);
+        }
+        return ids;
+      }
+
+      function captionFor(id) {
+        if (id === 'back') return 'Verso';
+        return id.slice(0, -1) + ' de ' + (SUIT_NAMES[id.slice(-1)] || '?');
+      }
+
+      function renderGrid() {
+        const t0 = performance.now();
+        const zoom = params.get('zoom');
+        if (zoom) {
+          const size = Number(params.get('size')) || 360;
+          const row = section('Inspeção ampliada', size);
+          for (const id of expandZoom(zoom.split(','))) addCard(row, id, size, captionFor(id));
+        } else {
+          const w = Number(params.get('size')) || 124;
+          SUITS.forEach(([s, name], i) => {
+            const row = section(name, w);
+            for (const r of RANKS) addCard(row, r + s, w, r + s);
+            if (i === 0) addCard(row, 'back', w, 'Verso');
+          });
+          const tiny = section('Tamanho de mesa (legibilidade)', 58, 'tiny');
+          for (const id of ['Qh', 'Jc', 'Ks', 'Ad', 'As', '2h', '3c', '4d', '7s', 'back']) addCard(tiny, id, 58);
+        }
+        state.timings.grid = Math.round(performance.now() - t0);
+      }
+
+      function render3d() {
+        const THREE = window.THREE;
+        const canvas = document.createElement('canvas');
+        canvas.id = 'stage3d';
+        main.appendChild(canvas);
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(2, dpr));
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        CardTex.setRenderer(renderer);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(40, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+        camera.position.set(0, 4.6, 4.2);
+        camera.lookAt(0, 0, 0.35);
+
+        scene.add(new THREE.HemisphereLight(0xffe2b8, 0x10201a, 0.9));
+        const spot = new THREE.SpotLight(0xffb56b, 90, 30, 0.9, 0.5, 1.6);
+        spot.position.set(0, 9, 1);
+        scene.add(spot);
+
+        const felt = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), new THREE.MeshStandardMaterial({ color: 0x1e4a38, roughness: 0.95 }));
+        felt.rotation.x = -Math.PI / 2;
+        scene.add(felt);
+
+        const geo = new THREE.PlaneGeometry(0.63 * 1.6, 0.88 * 1.6);
+        const ids = ['Qc', 'Jh', 'Ks', 'Ad', 'As', '3h', '2c', '7d', '4s', 'back'];
+        ids.forEach((id, i) => {
+          const tex = id === 'back' ? CardTex.back() : CardTex.face(id);
+          const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.5, roughness: 0.6 });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.rotation.x = -Math.PI / 2;
+          mesh.rotation.z = (i - 4.5) * -0.05;
+          mesh.position.set((i % 5 - 2) * 1.35, 0.01, Math.floor(i / 5) * 1.8 - 0.6);
+          scene.add(mesh);
+        });
+        renderer.render(scene, camera);
+        state.textures = ids.map((id) => {
+          const t = id === 'back' ? CardTex.back() : CardTex.face(id);
+          return { id, colorSpace: t.colorSpace, anisotropy: t.anisotropy, mip: t.generateMipmaps, w: t.image.width, h: t.image.height };
+        });
+        state.maxAniso = renderer.capabilities.getMaxAnisotropy();
+      }
+
+      if (!CardTex) {
+        state.errors.push('Truco.CardTex não carregou');
+        state.done = true;
+        return;
+      }
+      const t0 = performance.now();
+      CardTex.ready().then(() => {
+        state.timings.ready = Math.round(performance.now() - t0);
+        if (params.get('mode') === '3d') render3d();
+        else renderGrid();
+        state.done = true;
+      }).catch((err) => {
+        state.errors.push(String(err && err.stack || err));
+        state.done = true;
+      });
+    })();
+  </script>
+</body>
+</html>

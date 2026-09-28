@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17110D">
+  <meta name="description" content="TrucAÍ: truco paulista com manilha limpa numa mesa de boteco em 3D.">
+  <title>TrucAÍ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <!-- Fontes sem bloquear a página: entram como "print" e viram "all" quando chegam (js/main.js tem o reserva). -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Shrikhand&display=swap" media="print" onload="this.media='all'" data-fonts>
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Shrikhand&display=swap"></noscript>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="stage"></div>
+    <div id="hud"><p class="boot-note" role="status">TrucAÍ — arrumando a mesa…</p></div>
+    <noscript>
+      <p style="position:absolute;inset:auto 16px 45%;text-align:center;font:500 18px/1.4 Barlow,system-ui,sans-serif;color:#EBDDBF">O TrucAÍ precisa de JavaScript ligado.</p>
+    </noscript>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+  <script src="js/core/rules.js"></script>
+  <script src="js/core/engine.js"></script>
+  <script src="js/core/ai.js"></script>
+  <script src="js/core/personagens.js"></script>
+  <!-- Fichas de personagem (docs/PERSONAGENS.md): uma por arquivo, depois de js/core/personagens.js. -->
+  <script src="personagens/tiao.js"></script>
+  <script src="personagens/vini.js"></script>
+  <script src="personagens/bia.js"></script>
+  <script src="personagens/cida.js"></script>
+  <script src="personagens/juninho.js"></script>
+  <script src="personagens/rosa.js"></script>
+  <script src="js/gfx/tween.js"></script>
+  <script src="js/gfx/cardart.js"></script>
+  <script src="js/gfx/cardtex.js"></script>
+  <script src="js/gfx/table.js"></script>
+  <script src="js/gfx/world.js"></script>
+  <script src="js/gfx/avatars.js"></script>
+  <script src="js/gfx/avatarpreview.js"></script>
+  <script src="js/gfx/cards3d.js"></script>
+  <script src="js/gfx/galaxy.js"></script>
+  <script src="js/gfx/scene.js"></script>
+  <!-- Áudio gravado (docs/AUDIO.md): lista dos arquivos em audio/, gerada por tools/audio-manifest.mjs. -->
+  <script src="audio/manifest.js"></script>
+  <script src="js/ui/audio.js"></script>
+  <script src="js/ui/hud.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

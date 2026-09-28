@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrucAÍ — Prévia dos avatares</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=Shrikhand&display=swap">
+  <style>
+    :root { --ink: #17110D; --espresso: #2B1D14; --crema: #EBDDBF; --brass: #C9A15B; --muted: #A8927A; }
+    html, body { margin: 0; min-height: 100%; background: var(--ink); color: var(--crema); font-family: Barlow, system-ui, sans-serif; }
+    #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
+    main { position: relative; z-index: 1; display: flex; gap: 16px; padding: 12px; box-sizing: border-box; align-items: flex-start; }
+    #grid { flex: 1; display: grid; gap: 6px; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); }
+    .cell { position: relative; aspect-ratio: var(--ratio, 3 / 4); border: 1px solid rgba(201, 161, 91, 0.25); border-radius: 8px; }
+    .cell span { position: absolute; left: 6px; bottom: 4px; font: 600 11px/1.2 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--crema); text-shadow: 0 1px 2px #000; }
+    .head { font: 700 12px "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--brass); display: flex; align-items: flex-end; padding: 2px 4px; aspect-ratio: auto; border: 0; }
+    aside { width: 440px; flex: none; position: sticky; top: 12px; }
+    .modal { background: var(--espresso); border: 1px solid rgba(201, 161, 91, 0.35); border-radius: 14px; padding: 12px; box-sizing: border-box; }
+    #pv { width: 100%; height: 480px; border-radius: 10px; overflow: hidden; }
+    .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    select, button { font: 600 12px "Barlow Condensed", sans-serif; letter-spacing: .04em; background: #3a281c; color: var(--crema); border: 1px solid rgba(201, 161, 91, 0.35); border-radius: 6px; padding: 4px 6px; }
+    button:hover { border-color: var(--brass); }
+    h1 { font: 700 14px "Barlow Condensed", sans-serif; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 8px; color: var(--brass); }
+    body.only-preview main { justify-content: center; }
+    body.only-preview #grid { display: none; }
+    body.no-preview aside { display: none; }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <main>
+    <div id="grid"></div>
+    <aside>
+      <div class="modal" id="modal">
+        <h1>Prévia (modal)</h1>
+        <div id="pv"></div>
+        <div class="row" id="pickers"></div>
+        <div class="row" id="gestures"></div>
+      </div>
+    </aside>
+  </main>
+  <script>
+    /*
+     * Prévia dos avatares. Modos (?mode=):
+     *   grid     (padrão) elenco variado + a prévia do modal (Truco.AvatarPreview) à direita
+     *   matrix   cabelo × acessório, só a cabeça (?view=34|front|side|back|game)
+     *   outfits  roupas × rosto, cabeça e tronco (?view=...)
+     *   signals  um avatar por gesto, congelado no meio do gesto (?view=head|game, ?t=0.45)
+     *   custom   ?cells=[{label, view, spec, signal, gaze}]&cols=N (inspeção de casos; gaze = [x,y,z]
+     *            no referencial do avatar para onde ele olha, senão olha para a câmera)
+ *   preview  só a prévia do modal (?w=440&h=480, ?spec=<json>, ?signal=piscar, ?t=0.45)
+     * ?t=<s>: congela tudo no instante t (s) depois de disparar os gestos (para screenshots).
+     * window.__avp = { ready, grid, preview, info() }.
+     */
+    (function () {
+      'use strict';
+      const params = new URLSearchParams(location.search);
+      const mode = params.get('mode') || 'grid';
+      const view = params.get('view') || (mode === 'matrix' ? '34' : mode === 'signals' ? 'head' : '34');
+      const freezeAt = params.has('t') ? Number(params.get('t')) : null;
+      const quality = params.get('quality') === 'low' ? 'low' : 'high';
+      window.__avp = { ready: false, errors: [] };
+      window.Truco = window.Truco || {};
+      window.Truco.reportError = (e, where) => window.__avp.errors.push(String(where) + ': ' + (e && e.message || e));
+      window.addEventListener('error', (e) => window.__avp.errors.push(String(e.message)));
+
+      const FILES = ['https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js', '../js/gfx/tween.js', '../js/gfx/table.js', '../js/gfx/avatars.js', '../js/gfx/avatarpreview.js'];
+      function load(i) {
+        if (i >= FILES.length) return start();
+        const s = document.createElement('script');
+        s.src = FILES[i];
+        s.onload = () => load(i + 1);
+        s.onerror = () => { window.__avp.errors.push('falhou ' + FILES[i]); load(i + 1); };
+        document.head.appendChild(s);
+      }
+      load(0);
+
+      const SKINS = ['#f0c8a4', '#e0b48e', '#b5835a', '#6e4630'];
+      const HAIRC = ['#1c1512', '#5a3a24', '#d9b36a', '#a4461f', '#8a8580', '#e8e4dc'];
+      const SHIRTS = ['#2F5D8A', '#9B3B2E', '#3E6B45', '#C9A15B', '#6c6863', '#f4efe4', '#1d1d24'];
+
+      function cellsFor() {
+        const A = Truco.Avatars;
+        const cells = [];
+        if (mode === 'matrix') {
+          document.documentElement.style.setProperty('--cols', String(A.ACCESSORIES.length + 1));
+          document.documentElement.style.setProperty('--ratio', '1 / 1');
+          cells.push({ head: '' });
+          A.ACCESSORIES.forEach((a) => cells.push({ head: a }));
+          A.HAIRS.forEach((h, i) => {
+            cells.push({ head: h });
+            A.ACCESSORIES.forEach((acc, j) => cells.push({
+              label: h + ' · ' + acc, view: view === '34' ? 'head' : view,
+              spec: { seat: 1 + ((i + j) % 3), hairStyle: h, accessory: acc, face: i % 3 === 0 ? 'bigodao' : 'nenhum', skin: SKINS[(i + j) % 4], hair: HAIRC[i % HAIRC.length], shirt: SHIRTS[j % SHIRTS.length] },
+            }));
+          });
+        } else if (mode === 'outfits') {
+          document.documentElement.style.setProperty('--cols', '6');
+          A.OUTFITS.forEach((o, i) => ['nenhum', 'bigode', 'bigodao', 'cavanhaque', 'barba'].forEach((f, j) => {
+            const names = { lisa: 'camisa-lisa', listrada: 'camisa-listrada', time: 'camisa-de-time', regata: 'regata', social: 'camisa-social', avental: 'avental' };
+            if (j > 1) return;
+            cells.push({ label: names[o] + ' · ' + f, view: j ? 'front' : view, spec: { seat: 1 + (i % 3), hairStyle: A.HAIRS[(i + j * 3) % A.HAIRS.length], face: f, outfit: names[o], skin: SKINS[(i + j) % 4], hair: HAIRC[(i + 1) % HAIRC.length], shirt: SHIRTS[i % SHIRTS.length] } });
+          }));
+          document.documentElement.style.setProperty('--cols', '4');
+        } else if (mode === 'signals') {
+          document.documentElement.style.setProperty('--cols', '4');
+          document.documentElement.style.setProperty('--ratio', view === 'game' ? '4 / 3' : '1 / 1');
+          const base = params.has('spec') ? JSON.parse(params.get('spec')) : { style: 'coque', shirt: '#9B3B2E', skin: '#e0b48e', hair: '#5a3a24' };
+          cells.push({ label: 'repouso', view, spec: Object.assign({ seat: 2 }, base) });
+          A.SIGNALS.forEach((g) => cells.push({ label: g, view, signal: g, spec: Object.assign({ seat: 2 }, base) }));
+        } else if (mode === 'custom') {
+          // ?cells=[{"label":"x","view":"side","spec":{...},"signal":"piscar"}]&cols=3
+          document.documentElement.style.setProperty('--cols', params.get('cols') || '3');
+          JSON.parse(params.get('cells') || '[]').forEach((c) => cells.push(Object.assign({ view }, c)));
+        } else if (mode === 'grid') {
+          document.documentElement.style.setProperty('--cols', '4');
+          const cast = [
+            { label: 'Tião (style bigode)', spec: { seat: 1, style: 'bigode', shirt: '#2F5D8A', skin: '#b5835a', hair: '#8a8580' } },
+            { label: 'Dona Cida (style coque)', spec: { seat: 2, style: 'coque', shirt: '#9B3B2E', skin: '#e0b48e', hair: '#5a3a24' } },
+            { label: 'Zé (style bone)', spec: { seat: 3, style: 'bone', shirt: '#3E6B45', skin: '#8d5a3b', hair: '#1c1512' } },
+            { label: 'Zé (style topete)', spec: { seat: 3, style: 'topete', shirt: '#3E6B45', skin: '#8d5a3b', hair: '#1c1512' } },
+            { label: 'padeiro', spec: { seat: 1, hairStyle: 'careca', face: 'bigode', accessory: 'lapis-na-orelha', outfit: 'avental', skin: '#f0c8a4', hair: '#8a8580', shirt: '#6c6863' } },
+            { label: 'malandro', spec: { seat: 2, hairStyle: 'topete', face: 'cavanhaque', accessory: 'palito-na-boca', outfit: 'regata', skin: '#b5835a', hair: '#1c1512', shirt: '#f4efe4' } },
+            { label: 'seu doutor', spec: { seat: 3, hairStyle: 'laterais', face: 'bigodao', accessory: 'chapeu-panama', outfit: 'camisa-social', skin: '#e0b48e', hair: '#e8e4dc', shirt: '#dfe6ee', accent: '#8aa0b8' } },
+            { label: 'black + panamá', spec: { seat: 1, hairStyle: 'black', face: 'barba', accessory: 'chapeu-panama', outfit: 'camisa-listrada', skin: '#6e4630', hair: '#1c1512', shirt: '#9B3B2E' } },
+            { label: 'coque + boné', spec: { seat: 2, hairStyle: 'coque', accessory: 'bone', outfit: 'camisa-de-time', skin: '#f0c8a4', hair: '#a4461f', shirt: '#C9A15B' } },
+            { label: 'comprido + óculos', spec: { seat: 3, hairStyle: 'comprido', accessory: 'oculos', outfit: 'avental', skin: '#b5835a', hair: '#5a3a24', shirt: '#2F5D8A' } },
+            { label: 'curto + palito', spec: { seat: 1, hairStyle: 'curto', face: 'bigodao', accessory: 'palito-na-boca', outfit: 'camisa-social', skin: '#8d5a3b', hair: '#1c1512', shirt: '#f4efe4' } },
+            { label: 'black + lápis', spec: { seat: 2, hairStyle: 'black', accessory: 'lapis-na-orelha', outfit: 'regata', skin: '#6e4630', hair: '#2b1d14', shirt: '#1d1d24' } },
+          ];
+          cast.forEach((c) => cells.push(Object.assign({ view }, c)));
+        }
+        return cells;
+      }
+
+      // Enquadramentos (referencial do avatar: tampo em y = 0, cabeça ~3,9).
+      const VIEWS = {
+        head: { target: [0, 4.15, 0.35], dist: 7, fov: 30, az: 0.45, el: 0.16 },
+        front: { target: [0, 3.0, 0.4], dist: 15, fov: 30, az: 0, el: 0.14 },
+        side: { target: [0, 4.1, 0.2], dist: 7, fov: 30, az: 1.45, el: 0.12 },
+        profile: { target: [0, 4.45, 0.75], dist: 8, fov: 30, az: Math.PI / 2, el: 0.05 },
+        back: { target: [0, 4.1, 0.0], dist: 7, fov: 30, az: 2.6, el: 0.25 },
+        '34': { target: [0, 3.0, 0.4], dist: 15, fov: 30, az: 0.6, el: 0.16 },
+        // Parecido com o jogo: a parceira vista do assento do humano (câmera sentada, ~35° sobre a mesa:
+        // a cabeça da parceira fica uns 11° abaixo do olho).
+        game: { target: [0, 3.0, 0.5], dist: 15, fov: 32, az: 0, el: 0.2 },
+      };
+
+      let grid = null;
+      function buildGrid(cells) {
+        const THREE = window.THREE;
+        const A = Truco.Avatars;
+        const P = Truco.AvatarPreview;
+        const canvas = document.getElementById('gl');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
+        renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+        renderer.setScissorTest(true);
+        const scene = new THREE.Scene();
+        const tween = P.makeTween();
+        const host = document.getElementById('grid');
+        const items = [];
+        const trash = [];
+        const track = (x) => (trash.push(x), x);
+        cells.forEach((c, i) => {
+          const div = document.createElement('div');
+          div.className = c.head !== undefined ? 'cell head' : 'cell';
+          if (c.head !== undefined) div.textContent = c.head;
+          else div.innerHTML = '<span></span>';
+          host.appendChild(div);
+          if (c.head !== undefined) return;
+          div.querySelector('span').textContent = c.label;
+          const origin = new THREE.Vector3((i % 10) * 120, 0, Math.floor(i / 10) * 120);
+          const v = VIEWS[c.view] || VIEWS['34'];
+          const cam = new THREE.PerspectiveCamera(v.fov, 1, 0.5, 60);
+          const t = new THREE.Vector3().fromArray(v.target).add(origin);
+          cam.position.set(t.x + Math.sin(v.az) * Math.cos(v.el) * v.dist, t.y + Math.sin(v.el) * v.dist, t.z + Math.cos(v.az) * Math.cos(v.el) * v.dist);
+          cam.lookAt(t);
+          // Luzes do "modal" por célula (sem sombra, para a grade ficar leve).
+          const key = new THREE.SpotLight(0xffd6a0, 520, 40, 0.62, 0.55, 1.6);
+          key.position.set(origin.x + 1.2, 13, origin.z + 5.5);
+          key.target.position.set(origin.x, 2.6, origin.z);
+          const fill = new THREE.PointLight(0xffc48a, 60, 40, 1.6);
+          fill.position.set(origin.x - 5, 6, origin.z + 7);
+          scene.add(key, key.target, fill);
+          const chair = P.buildChair(THREE, track);
+          chair.position.add(origin);
+          scene.add(chair);
+          const ctx = { THREE, scene, renderer, camera: cam, quality, players: 4, tween, table: { keepOut: [] }, avatar: () => null };
+          const av = A.create(ctx, Object.assign({}, c.spec, { position: origin, facing: 0 }));
+          // gaze: [x, y, z] no referencial do avatar (ex.: [0, 4, 10] = olhar para a frente, para ver
+          // o perfil numa vista 'side'); sem gaze, olha para a câmera da célula.
+          av.lookAt(c.gaze ? new THREE.Vector3().fromArray(c.gaze).add(origin) : cam.position);
+          items.push({ div, cam, av, cell: c });
+        });
+        scene.add(new THREE.HemisphereLight(0x8fa3d6, 0x3a2414, 0.55));
+        const rim = new THREE.DirectionalLight(0xff9a4a, 1.6);
+        rim.position.set(-3, 6, -8);
+        scene.add(rim);
+
+        let time = 0;
+        function step(dt) {
+          time += dt;
+          tween.update(dt);
+          for (const it of items) it.av.update(dt, time);
+        }
+        function render() {
+          const W = window.innerWidth;
+          const H = window.innerHeight;
+          renderer.setSize(W, H, false);
+          renderer.setScissor(0, 0, W, H);
+          renderer.setViewport(0, 0, W, H);
+          renderer.setClearColor(0x17110d, 1);
+          renderer.clear();
+          for (const it of items) {
+            const r = it.div.getBoundingClientRect();
+            if (r.bottom < 0 || r.top > H || r.width < 2) continue;
+            const y = H - r.bottom;
+            renderer.setViewport(r.left, y, r.width, r.height);
+            renderer.setScissor(r.left, y, r.width, r.height);
+            it.cam.aspect = r.width / r.height;
+            it.cam.updateProjectionMatrix();
+            renderer.setClearColor(0x221811, 1);
+            renderer.clear();
+            renderer.render(scene, it.cam);
+          }
+        }
+        function signals() {
+          for (const it of items) if (it.cell.signal) it.av.signal(it.cell.signal);
+        }
+        return { step, render, signals, items, renderer, tween };
+      }
+
+      let preview = null;
+      function buildPreview() {
+        const P = Truco.AvatarPreview;
+        const A = Truco.Avatars;
+        const el = document.getElementById('pv');
+        if (params.has('w')) document.querySelector('aside').style.width = params.get('w') + 'px';
+        if (params.has('h')) el.style.height = params.get('h') + 'px';
+        preview = P.create(el, { quality });
+        const spec = params.has('spec') ? JSON.parse(params.get('spec')) : { seat: 2, hairStyle: 'coque', face: 'nenhum', accessory: 'oculos', outfit: 'avental', skin: '#e0b48e', hair: '#5a3a24', shirt: '#9B3B2E' };
+        const state = Object.assign({}, spec);
+        preview.setSpec(state);
+        const pick = document.getElementById('pickers');
+        const opts = { hairStyle: A.HAIRS, face: A.FACES, accessory: A.ACCESSORIES, outfit: ['camisa-lisa', 'camisa-listrada', 'camisa-de-time', 'regata', 'camisa-social', 'avental'], skin: SKINS, hair: HAIRC, shirt: SHIRTS };
+        Object.keys(opts).forEach((k) => {
+          const sel = document.createElement('select');
+          sel.title = k;
+          opts[k].forEach((v) => {
+            const op = document.createElement('option');
+            op.value = op.textContent = v;
+            if (state[k] === v) op.selected = true;
+            sel.appendChild(op);
+          });
+          sel.addEventListener('change', () => { state[k] = sel.value; preview.setSpec(state); });
+          pick.appendChild(sel);
+        });
+        const ges = document.getElementById('gestures');
+        A.SIGNALS.concat(['shout', 'think', 'win', 'lose', 'nod']).forEach((g) => {
+          const b = document.createElement('button');
+          b.textContent = g;
+          b.addEventListener('click', () => (A.SIGNALS.includes(g) ? preview.signal(g) : preview.act(g)));
+          ges.appendChild(b);
+        });
+        return preview;
+      }
+
+      function start() {
+        if (!window.THREE || !Truco.Avatars || !Truco.AvatarPreview) {
+          window.__avp.errors.push('scripts não carregaram');
+          return;
+        }
+        if (mode === 'preview') document.body.classList.add('only-preview');
+        if (mode !== 'grid' && mode !== 'preview') document.body.classList.add('no-preview');
+        if (mode !== 'preview') grid = buildGrid(cellsFor());
+        if (mode === 'grid' || mode === 'preview') buildPreview();
+        window.__avp.grid = grid;
+        window.__avp.preview = preview;
+        window.__avp.info = () => preview && preview.debug.info();
+
+        if (freezeAt !== null) {
+          // Congela: dispara os gestos, avança o relógio em passos fixos e renderiza uma vez.
+          if (grid) grid.signals();
+          if (preview && params.has('signal')) preview.signal(params.get('signal'));
+          const steps = Math.max(1, Math.round(freezeAt * 60));
+          for (let i = 0; i < steps; i++) {
+            if (grid) grid.step(1 / 60);
+          }
+          if (grid) grid.render();
+          if (preview) {
+            // A prévia tem laço próprio; o relógio dela avança pelo debug.step até o instante pedido.
+            preview.debug.pause(true);
+            if (params.has('az')) preview.debug.orbit.az = Number(params.get('az'));
+            for (let i = 0; i < steps; i++) preview.debug.step(1 / 60);
+            preview.debug.render();
+          }
+          requestAnimationFrame(() => requestAnimationFrame(() => (window.__avp.ready = true)));
+          return;
+        }
+        let last = performance.now();
+        let retrigger = 0;
+        function loop(now) {
+          const dt = Math.min(0.05, (now - last) / 1000);
+          last = now;
+          if (grid) {
+            if (mode === 'signals') {
+              retrigger -= dt;
+              if (retrigger <= 0) { retrigger = 2; grid.signals(); }
+            }
+            grid.step(dt);
+            grid.render();
+          }
+          requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+        setTimeout(() => (window.__avp.ready = true), 400);
+      }
+    })();
+  </script>
+</body>
+</html>

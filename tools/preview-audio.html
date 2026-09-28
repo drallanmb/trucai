@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrucAÍ — Laboratório de som</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=Shrikhand&display=swap">
+  <style>
+    :root {
+      --ink: #17110D;
+      --espresso: #2B1D14;
+      --crema: #EBDDBF;
+      --paper: #F7F1E3;
+      --brass: #C9A15B;
+      --truco: #D2402F;
+      --muted: #A8927A;
+      --good: #6FBF73;
+      --bad: #E0694F;
+      --line: rgba(201, 161, 91, 0.28);
+      --line-strong: rgba(201, 161, 91, 0.6);
+      --panel: rgba(43, 29, 20, 0.88);
+      --well: rgba(23, 17, 13, 0.7);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 181, 107, 0.16), rgba(0, 0, 0, 0) 70%),
+        var(--ink);
+      color: var(--crema);
+      font: 400 15px/1.45 Barlow, system-ui, sans-serif;
+      padding: 28px 16px 48px;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; }
+    header { margin-bottom: 18px; }
+    .eyebrow, h2, .label, kbd, .num {
+      font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+    }
+    .eyebrow {
+      font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--brass); margin: 0 0 2px;
+    }
+    h1 {
+      font-family: Shrikhand, Georgia, serif; font-weight: 400; font-size: 40px; line-height: 1.1;
+      margin: 0 0 8px; color: var(--crema); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+    }
+    header p { margin: 0; max-width: 70ch; color: var(--muted); }
+    kbd {
+      display: inline-block; min-width: 1.6em; padding: 0 5px; border: 1px solid var(--line);
+      border-radius: 5px; font-size: 12px; font-weight: 600; text-align: center; color: var(--muted);
+      background: rgba(23, 17, 13, 0.5);
+    }
+    .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+    }
+    .bar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin: 18px 0 8px;
+      position: sticky; top: 8px; z-index: 5; backdrop-filter: blur(6px);
+    }
+    .state { display: flex; align-items: center; gap: 8px; min-width: 190px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 3px rgba(168, 146, 122, 0.18); flex: none; }
+    .dot.on { background: var(--good); box-shadow: 0 0 0 3px rgba(111, 191, 115, 0.22); }
+    .state strong { font-weight: 600; }
+    .state small { display: block; color: var(--muted); font-size: 12px; }
+
+    .meter { display: flex; align-items: center; gap: 10px; flex: 1 1 260px; min-width: 220px; }
+    .label { font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .meter-track {
+      position: relative; flex: 1; height: 10px; border-radius: 5px; background: var(--well); overflow: hidden;
+      border: 1px solid rgba(201, 161, 91, 0.18);
+    }
+    .meter-fill {
+      position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 5px;
+      background: linear-gradient(90deg, #6FBF73 0%, #C9A15B 78%, #D2402F 100%);
+      background-size: var(--track-w, 300px) 100%;
+    }
+    .meter-hold { position: absolute; top: -1px; bottom: -1px; width: 2px; left: 0; background: var(--paper); opacity: 0; }
+    .meter-ceiling { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--truco); opacity: .8; }
+    .meter-read { display: flex; flex-direction: column; align-items: flex-end; min-width: 92px; }
+    .meter-read .num { font-size: 16px; line-height: 1.1; }
+    .meter-read button { all: unset; cursor: pointer; font-size: 12px; color: var(--muted); }
+    .meter-read button:hover { color: var(--crema); }
+    .meter-read button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; border-radius: 3px; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn {
+      appearance: none; border: 1px solid var(--line-strong); background: transparent; color: var(--crema);
+      font: 600 14px/1 Barlow, system-ui, sans-serif; padding: 9px 14px; border-radius: 999px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: background .15s, border-color .15s, color .15s;
+    }
+    .btn:hover { background: rgba(201, 161, 91, 0.12); }
+    .btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+    .btn[aria-pressed="true"] { background: var(--brass); border-color: var(--brass); color: var(--ink); }
+    .btn.primary { background: var(--truco); border-color: var(--truco); color: var(--paper); }
+    .btn.primary:hover { background: #E04B39; }
+    .btn kbd { border-color: currentColor; color: inherit; opacity: .7; background: transparent; }
+
+    h2 {
+      font-weight: 600; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+      margin: 22px 0 8px;
+    }
+    /* Quadro de 5 colunas: Cartas numa linha; Mesa + Resultado; Interface + Voz. */
+    .board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 12px; }
+    .group { grid-column: span var(--n); display: flex; flex-direction: column; min-width: 0; }
+    .grid { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 12px; flex: 1; }
+    @media (min-width: 1061px) {
+      .desc { min-height: calc(2 * 1.45em); }
+    }
+    @media (max-width: 1060px) {
+      .board { grid-template-columns: minmax(0, 1fr); }
+      .group { grid-column: auto; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+    }
+    .card {
+      appearance: none; text-align: left; color: inherit; font: inherit; cursor: pointer;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 10px;
+      display: flex; flex-direction: column; gap: 8px; transition: border-color .2s, box-shadow .2s, transform .12s;
+    }
+    .card:hover { border-color: var(--line-strong); }
+    .card:active { transform: translateY(1px); }
+    .card:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+    .card.hit { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass), 0 0 22px rgba(201, 161, 91, 0.28); }
+    .card.call .title { font-family: Shrikhand, Georgia, serif; font-weight: 400; color: var(--truco); letter-spacing: .01em; }
+    .card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .title { font-weight: 600; font-size: 17px; }
+    .desc { color: var(--muted); font-size: 13px; margin-top: -6px; }
+    .desc code { font: 500 12px/1 ui-monospace, "SF Mono", Menlo, monospace; color: var(--brass); }
+    canvas.wave { display: block; width: 100%; height: 58px; border-radius: 6px; background: var(--well); }
+    .stats { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+    .stats .num { color: var(--crema); }
+    .stats .warn { color: var(--bad); }
+
+    .voice { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+    .voice-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .field {
+      background: var(--well); border: 1px solid var(--line); color: var(--crema); border-radius: 8px;
+      font: 500 15px/1 Barlow, system-ui, sans-serif; padding: 9px 12px; min-height: 38px;
+    }
+    .field:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+    input.field { flex: 1 1 220px; min-width: 0; }
+    select.field { flex: 0 1 auto; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      appearance: none; border: 1px solid var(--line); background: rgba(23, 17, 13, 0.4); color: var(--crema);
+      font: 500 13px/1 Barlow, system-ui, sans-serif; padding: 7px 10px; border-radius: 999px; cursor: pointer;
+    }
+    .chip:hover { border-color: var(--line-strong); }
+    .chip:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+    .voices { color: var(--muted); font-size: 13px; margin-top: auto; }
+    .voices b { color: var(--crema); font-weight: 600; }
+    footer { margin-top: 28px; color: var(--muted); font-size: 13px; max-width: 80ch; }
+    footer code { color: var(--brass); font-size: 12px; }
+
+    @media (max-width: 560px) {
+      body { padding: 20px 16px 40px; }
+      h1 { font-size: 32px; }
+      .bar { position: static; }
+      .state { min-width: 0; flex: 1 1 100%; }
+      .controls { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .card, .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow">Laboratório de som</p>
+      <h1>TrucAÍ</h1>
+      <p>Mesa de ferro na calçada de um boteco paulistano. Cada efeito é sintetizado na hora com
+        WebAudio: ruído filtrado, modos de metal e vidro e cordas de Karplus–Strong. Clique num
+        cartão ou use as teclas; cada disparo sai um pouco diferente.</p>
+    </header>
+
+    <section class="panel bar" aria-label="Controles do áudio">
+      <div class="state">
+        <span class="dot" id="dot"></span>
+        <div><strong id="stateText">Áudio desligado</strong><small id="stateHint">clique em qualquer lugar para ligar</small></div>
+      </div>
+      <div class="meter">
+        <span class="label">Saída</span>
+        <div class="meter-track" id="track" aria-hidden="true">
+          <div class="meter-fill" id="fill"></div>
+          <div class="meter-ceiling" id="ceiling"></div>
+          <div class="meter-hold" id="hold"></div>
+        </div>
+        <div class="meter-read">
+          <span class="num" id="peakNow">— dBFS</span>
+          <button type="button" id="peakMax" title="Zerar o pico máximo">máx —</button>
+        </div>
+      </div>
+      <div class="controls">
+        <button type="button" class="btn" id="mute" aria-pressed="false">Mudo <kbd>M</kbd></button>
+        <button type="button" class="btn" id="ambient" aria-pressed="false">Ambiente <kbd>A</kbd></button>
+        <button type="button" class="btn" id="voiceToggle" aria-pressed="true">Voz</button>
+        <button type="button" class="btn primary" id="playAll">Tocar todos</button>
+      </div>
+    </section>
+
+    <main class="board" id="board">
+      <section class="group" id="voiceGroup" style="--n: 3" aria-labelledby="voiceTitle">
+        <h2 id="voiceTitle">Voz · speechSynthesis pt-BR</h2>
+        <div class="panel voice">
+          <div class="voice-row">
+            <input class="field" id="sayText" value="Truco, marreco!" aria-label="Texto para falar">
+            <select class="field" id="seat" aria-label="Assento">
+              <option value="0">Assento 0 · você</option>
+              <option value="1" selected>Assento 1 · direita</option>
+              <option value="2">Assento 2 · parceiro</option>
+              <option value="3">Assento 3 · esquerda</option>
+            </select>
+            <button type="button" class="btn" id="shout" aria-pressed="true">Gritar</button>
+            <button type="button" class="btn primary" id="say">Falar <kbd>T</kbd></button>
+          </div>
+          <div class="chips" id="chips"></div>
+          <div class="voices" id="voices"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      A forma de onda mostra o envelope (escala em dB, de −60 a 0) de uma variação renderizada offline
+      pela mesma cadeia de saída do jogo: compressor leve e teto suave abaixo de −1 dBFS (linha vermelha no medidor).
+      API: <code>Truco.Audio.init()</code>, <code>play(nome)</code>, <code>say(texto, {seat, shout})</code>,
+      <code>ambient(bool)</code>, <code>setMuted(bool)</code>, <code>setVoice(bool)</code>.
+    </footer>
+  </div>
+
+  <script src="../js/ui/audio.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const Audio = window.Truco && window.Truco.Audio;
+      const $ = (id) => document.getElementById(id);
+
+      const GROUPS = [
+        { title: 'Cartas', sounds: [
+          ['shuffle', 'Embaralhar', 'riffle de ~30 estalos, esquerda e direita'],
+          ['deal', 'Distribuir', 'flick curto até o tampo'],
+          ['flip', 'Virar', 'estalo, ar e pouso'],
+          ['place', 'Bater carta', 'tapa na mesa de ferro + papel'],
+          ['slide', 'Deslizar', 'chiado no tampo pintado'],
+        ] },
+        { title: 'Mesa', sounds: [
+          ['bean', 'Tampinha', 'tento: tampinha assentando no tampo'],
+          ['call', 'Truco!', 'murro na mesa de ferro + whoosh'],
+        ] },
+        { title: 'Resultado da mão', sounds: [
+          ['win', 'Vitória', 'cavaquinho: tchá-ca-TCHÁ em Sol'],
+          ['lose', 'Derrota', 'lá menor descendo no violão'],
+          ['tie', 'Empate', 'quinta solta, duas vezes'],
+        ] },
+        { title: 'Interface', sounds: [
+          ['click', 'Clique', 'botões do HUD'],
+          ['hover', 'Hover', 'passar o mouse, quase subliminar'],
+        ] },
+      ];
+      const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='];
+      const PAUSE = { shuffle: 1.3, deal: 0.4, flip: 0.45, place: 0.5, slide: 0.5, bean: 0.6, win: 1.7, lose: 2.1, tie: 1.1, call: 1.1, click: 0.35, hover: 0.35 };
+      const PHRASES = ['Truco!', 'Seis!', 'Nove!', 'Doze!', 'Cai dentro!', 'Corro.', 'Mão de onze!', 'Essa é minha.', 'Tá fraco, hein?'];
+      const cards = {};
+      const fmtDb = (db) => (db <= -99 ? '−∞' : (db < 0 ? '−' : '') + Math.abs(db).toFixed(1).replace('.', ','));
+      const toDb = (x) => (x > 0 ? 20 * Math.log10(x) : -120);
+
+      // ---------------------------------------------------------------- cartões
+
+      const board = $('board');
+      for (const group of GROUPS) {
+        const section = document.createElement('section');
+        section.className = 'group';
+        section.style.setProperty('--n', group.sounds.length);
+        const h = document.createElement('h2');
+        h.textContent = group.title;
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        for (const [name, title, desc] of group.sounds) {
+          const key = KEYS[Audio.SOUNDS.indexOf(name)];
+          const card = document.createElement('button');
+          card.type = 'button';
+          card.className = 'card' + (name === 'call' ? ' call' : '');
+          card.dataset.sound = name;
+          card.setAttribute('aria-label', `${title} — tocar (${name}), tecla ${key}`);
+          card.innerHTML =
+            `<div class="card-top"><span class="title"></span><kbd></kbd></div>` +
+            `<div class="desc"><code>${name}</code> · <span></span></div>` +
+            `<canvas class="wave" aria-hidden="true"></canvas>` +
+            `<div class="stats"><span>pico <span class="num peak">…</span> dBFS</span><span><span class="num dur">…</span> s</span></div>`;
+          card.querySelector('.title').textContent = title;
+          card.querySelector('kbd').textContent = key;
+          card.querySelector('.desc span').textContent = desc;
+          card.addEventListener('click', () => trigger(name));
+          grid.appendChild(card);
+          cards[name] = card;
+        }
+        section.append(h, grid);
+        board.insertBefore(section, $('voiceGroup'));
+      }
+
+      function drawWave(card, buf) {
+        const canvas = card.querySelector('canvas');
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const w = canvas.clientWidth || 240;
+        const h = canvas.clientHeight || 58;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        const g = canvas.getContext('2d');
+        g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        g.clearRect(0, 0, w, h);
+        const mid = h / 2;
+        g.strokeStyle = 'rgba(201,161,91,0.14)';
+        g.lineWidth = 1;
+        for (const db of [-12, -24, -36, -48]) {
+          const y = ((db + 60) / 60) * (mid - 3);
+          g.beginPath();
+          g.moveTo(0, mid - y + 0.5); g.lineTo(w, mid - y + 0.5);
+          g.moveTo(0, mid + y - 0.5); g.lineTo(w, mid + y - 0.5);
+          g.stroke();
+        }
+        const L = buf.getChannelData(0);
+        const R = buf.numberOfChannels > 1 ? buf.getChannelData(1) : L;
+        const per = L.length / w;
+        let peak = 0;
+        let lastLoud = 0;
+        const col = new Float32Array(w);
+        for (let x = 0; x < w; x++) {
+          let m = 0;
+          const a = Math.floor(x * per), b = Math.min(L.length, Math.floor((x + 1) * per));
+          for (let i = a; i < b; i++) {
+            const v = Math.max(Math.abs(L[i]), Math.abs(R[i]));
+            if (v > m) m = v;
+            if (v > 0.001) lastLoud = i;
+          }
+          col[x] = m;
+          if (m > peak) peak = m;
+        }
+        const grad = g.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#E4C27F');
+        grad.addColorStop(0.5, '#C9A15B');
+        grad.addColorStop(1, '#E4C27F');
+        g.fillStyle = grad;
+        g.beginPath();
+        g.moveTo(0, mid);
+        for (let x = 0; x < w; x++) g.lineTo(x, mid - Math.max(0.5, ((Math.max(-60, toDb(col[x])) + 60) / 60) * (mid - 3)));
+        for (let x = w - 1; x >= 0; x--) g.lineTo(x, mid + Math.max(0.5, ((Math.max(-60, toDb(col[x])) + 60) / 60) * (mid - 3)));
+        g.closePath();
+        g.fill();
+        const peakDb = toDb(peak);
+        const peakEl = card.querySelector('.peak');
+        peakEl.textContent = fmtDb(peakDb);
+        peakEl.classList.toggle('warn', peakDb > -1);
+        card.querySelector('.dur').textContent = (lastLoud / buf.sampleRate).toFixed(2).replace('.', ',');
+        return peakDb;
+      }
+
+      const measured = {};
+      async function renderCard(name) {
+        const buf = await Audio.render(name);
+        if (buf) measured[name] = drawWave(cards[name], buf);
+      }
+
+      // ---------------------------------------------------------------- áudio
+
+      async function ensureAudio() {
+        const ok = await Audio.init();
+        refreshVoices();
+        return ok;
+      }
+
+      function flash(name) {
+        const card = cards[name];
+        if (!card) return;
+        card.classList.remove('hit');
+        void card.offsetWidth;
+        card.classList.add('hit');
+        clearTimeout(card._flash);
+        card._flash = setTimeout(() => card.classList.remove('hit'), 380);
+      }
+
+      async function trigger(name) {
+        await ensureAudio();
+        Audio.play(name);
+        flash(name);
+        renderCard(name);
+      }
+
+      function uiClick() {
+        Audio.play('click');
+      }
+
+      function setPressed(btn, on) {
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+
+      $('mute').addEventListener('click', async () => {
+        await ensureAudio();
+        const on = !Audio.isMuted();
+        if (!on) Audio.setMuted(false);
+        uiClick();
+        if (on) Audio.setMuted(true);
+        setPressed($('mute'), on);
+      });
+
+      $('ambient').addEventListener('click', async () => {
+        await ensureAudio();
+        uiClick();
+        const on = $('ambient').getAttribute('aria-pressed') !== 'true';
+        Audio.ambient(on);
+        setPressed($('ambient'), on);
+      });
+
+      $('voiceToggle').addEventListener('click', () => {
+        uiClick();
+        const on = $('voiceToggle').getAttribute('aria-pressed') !== 'true';
+        Audio.setVoice(on);
+        setPressed($('voiceToggle'), on);
+      });
+
+      let sequence = null;
+      $('playAll').addEventListener('click', async () => {
+        await ensureAudio();
+        if (sequence) {
+          sequence.stop = true;
+          return;
+        }
+        const run = (sequence = { stop: false });
+        $('playAll').textContent = 'Parar';
+        for (const name of Audio.SOUNDS) {
+          if (run.stop) break;
+          Audio.play(name);
+          flash(name);
+          await new Promise((r) => setTimeout(r, PAUSE[name] * 1000));
+        }
+        sequence = null;
+        $('playAll').textContent = 'Tocar todos';
+      });
+
+      // ---------------------------------------------------------------- voz
+
+      const chips = $('chips');
+      for (const text of PHRASES) {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip';
+        chip.textContent = text;
+        chip.addEventListener('click', () => {
+          $('sayText').value = text;
+          speak();
+        });
+        chips.appendChild(chip);
+      }
+
+      $('shout').addEventListener('click', () => {
+        uiClick();
+        setPressed($('shout'), $('shout').getAttribute('aria-pressed') !== 'true');
+      });
+
+      async function speak() {
+        await ensureAudio();
+        const seat = Number($('seat').value);
+        const shout = $('shout').getAttribute('aria-pressed') === 'true';
+        if (shout) Audio.play('call');
+        const ok = await Audio.say($('sayText').value, { seat, shout });
+        if (!ok) refreshVoices(true);
+      }
+      $('say').addEventListener('click', speak);
+      $('sayText').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') speak();
+      });
+
+      function refreshVoices(failed) {
+        const st = Audio.status();
+        const el = $('voices');
+        if (!st.speech) {
+          el.textContent = 'Este navegador não tem speechSynthesis — a fala fica em silêncio.';
+        } else if (!st.voices.length) {
+          el.textContent = failed
+            ? 'Nenhuma voz em português respondeu — a fala fica em silêncio (o jogo segue normalmente).'
+            : 'Nenhuma voz em português listada ainda.';
+        } else {
+          el.textContent = 'Em uso nos assentos: ';
+          st.voicesInUse.forEach((v, i) => {
+            const b = document.createElement('b');
+            b.textContent = v;
+            el.append(i ? ', ' : '', b);
+          });
+          const others = st.voices.length - st.voicesInUse.length;
+          el.append(`, cada assento com pitch e velocidade próprios.${others > 0 ? ` Outras ${others} vozes em português instaladas ficam de reserva.` : ''}`);
+        }
+      }
+      if (window.speechSynthesis && typeof speechSynthesis.addEventListener === 'function') {
+        speechSynthesis.addEventListener('voiceschanged', () => refreshVoices());
+      }
+
+      // ---------------------------------------------------------------- teclado
+
+      window.addEventListener('keydown', (e) => {
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const idx = KEYS.indexOf(e.key);
+        if (idx >= 0) {
+          e.preventDefault();
+          trigger(Audio.SOUNDS[idx]);
+        } else if (e.key === 'm' || e.key === 'M') {
+          $('mute').click();
+        } else if (e.key === 'a' || e.key === 'A') {
+          $('ambient').click();
+        } else if (e.key === 't' || e.key === 'T') {
+          speak();
+        }
+      });
+
+      // ---------------------------------------------------------------- estado e medidor
+
+      document.addEventListener('pointerdown', () => { ensureAudio(); }, { once: true, capture: true });
+
+      const lab = { maxPeak: 0, peak: 0, measured };
+      window.__audioLab = lab;
+      $('peakMax').addEventListener('click', () => {
+        lab.maxPeak = 0;
+      });
+
+      const DB_FLOOR = -60;
+      const pos = (db) => Math.max(0, Math.min(1, (db - DB_FLOOR) / -DB_FLOOR));
+      $('ceiling').style.left = (pos(-1) * 100).toFixed(2) + '%';
+      let shown = DB_FLOOR;
+      let samples = null;
+      let lastT = performance.now();
+      function frame(now) {
+        const dt = Math.min(0.1, (now - lastT) / 1000);
+        lastT = now;
+        const st = Audio.status();
+        const running = st.state === 'running';
+        $('dot').classList.toggle('on', running && !st.muted);
+        $('stateText').textContent = !st.supported ? 'Sem WebAudio' : !st.ready ? 'Áudio desligado'
+          : st.muted ? 'Mudo' : running ? 'Áudio ligado' : 'Áudio suspenso';
+        $('stateHint').textContent = !st.ready ? 'clique em qualquer lugar para ligar'
+          : `${st.activeVoices} ${st.activeVoices === 1 ? 'voz ativa' : 'vozes ativas'}${st.ambient ? ' · ambiente' : ''}`;
+        const an = Audio.analyser();
+        let peak = 0;
+        if (an) {
+          if (!samples || samples.length !== an.fftSize) samples = new Float32Array(an.fftSize);
+          an.getFloatTimeDomainData(samples);
+          for (let i = 0; i < samples.length; i++) {
+            const v = Math.abs(samples[i]);
+            if (v > peak) peak = v;
+          }
+        }
+        lab.peak = peak;
+        if (peak > lab.maxPeak) lab.maxPeak = peak;
+        const db = Math.max(DB_FLOOR, toDb(peak));
+        shown = db > shown ? db : Math.max(db, shown - 24 * dt);
+        const track = $('track');
+        $('fill').style.width = (pos(shown) * 100).toFixed(2) + '%';
+        $('fill').style.setProperty('--track-w', track.clientWidth + 'px');
+        const hold = $('hold');
+        hold.style.opacity = lab.maxPeak > 0.001 ? '1' : '0';
+        hold.style.left = `calc(${(pos(toDb(lab.maxPeak)) * 100).toFixed(2)}% - 1px)`;
+        $('peakNow').textContent = (shown <= DB_FLOOR ? '—' : fmtDb(shown)) + ' dBFS';
+        $('peakMax').textContent = 'máx ' + (lab.maxPeak > 0.001 ? fmtDb(toDb(lab.maxPeak)) : '—');
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+
+      refreshVoices();
+      (async () => {
+        for (const name of Audio.SOUNDS) await renderCard(name);
+        lab.rendered = true;
+      })();
+    })();
+  </script>
+</body>
+</html>
